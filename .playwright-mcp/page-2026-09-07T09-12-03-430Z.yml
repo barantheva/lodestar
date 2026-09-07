@@ -1,0 +1,128 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic "Lodestar" [ref=e5]
+      - generic [ref=e19]:
+        - heading "Lodestar" [level=2] [ref=e20]
+        - text: repo & fleet ops
+    - generic [ref=e21]:
+      - generic [ref=e22]: Dashboards
+      - link "📊 My stats" [ref=e23] [cursor=pointer]:
+        - /url: /stats
+      - link "📁 Repos stats" [ref=e24] [cursor=pointer]:
+        - /url: /repos
+      - link "🚦 Relay Pipeline" [ref=e25] [cursor=pointer]:
+        - /url: /relay
+      - link "🤖 My fleet" [ref=e26] [cursor=pointer]:
+        - /url: /fleet
+      - link "🕸️ AMP mesh" [ref=e27] [cursor=pointer]:
+        - /url: /amp
+    - generic [ref=e28]:
+      - generic [ref=e29]: Intelligence
+      - link "📚 Knowledge" [ref=e30] [cursor=pointer]:
+        - /url: /knowledge
+      - link "🧠 Memories" [ref=e31] [cursor=pointer]:
+        - /url: /memories
+    - generic [ref=e32]:
+      - generic [ref=e33]: Outcomes
+      - link "📜 History" [ref=e34] [cursor=pointer]:
+        - /url: /history
+      - link "🏷️ Releases" [ref=e35] [cursor=pointer]:
+        - /url: /releases
+      - link "🚀 New Release" [ref=e36] [cursor=pointer]:
+        - /url: /release-new
+      - link "🗒️ Agents Log" [ref=e37] [cursor=pointer]:
+        - /url: /agents-log
+    - generic [ref=e38]:
+      - generic [ref=e39]: Setup
+      - link "⚙️ Skill Setup" [ref=e40] [cursor=pointer]:
+        - /url: /setup
+      - link "🔧 Configuration" [ref=e41] [cursor=pointer]:
+        - /url: /config
+    - generic [ref=e42]: v0.1.0
+  - main [ref=e44]:
+    - heading "My stats" [level=1] [ref=e47]
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]:
+              - generic [ref=e53]: 📥
+              - generic [ref=e54]: Total Tracks
+            - generic [ref=e55]: "53"
+          - generic [ref=e56]: All tracks in flight-deck/tracks/
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: 📐
+              - generic [ref=e61]: Guard 1 Pending
+            - generic [ref=e62]: "1"
+          - generic [ref=e63]: Awaiting Analyst certification
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: 🌳
+              - generic [ref=e68]: In Progress
+            - generic [ref=e69]: "27"
+          - generic [ref=e70]: Guard 2 signed, not yet shipped
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - generic [ref=e74]: 🚀
+              - generic [ref=e75]: Shipped
+            - generic [ref=e76]: "25"
+          - generic [ref=e77]: Guard 3 certified
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - generic [ref=e80]:
+              - generic [ref=e81]: 🅰️
+              - generic [ref=e82]: Archetype A/B
+            - generic [ref=e83]: "53"
+          - generic [ref=e84]: Full Guard 1 required
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e88]: 🅲
+              - generic [ref=e89]: Archetype C/H
+            - generic [ref=e90]: "0"
+          - generic [ref=e91]: Guard 1 auto-bypassed
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - strong [ref=e94]: "⏳ Rate-Limit Sentinel Status:"
+          - text: All model quotas active.
+        - generic [ref=e95]: "Sentinel: ARMED (0 holds)"
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - generic [ref=e98]:
+            - generic [ref=e99]: 🚀
+            - generic [ref=e100]: Shipped Tracks by Repo
+          - generic [ref=e101]: 25 · SHIPPED
+        - generic [ref=e103]:
+          - generic [ref=e104]: org/repo
+          - generic [ref=e107]: 25 tracks
+        - generic [ref=e108]:
+          - generic [ref=e109]:
+            - text: "Guard 3 Zero-Bypass:"
+            - strong [ref=e110]: 100% (25/25 certified)
+          - generic [ref=e111]:
+            - text: "Source:"
+            - code [ref=e112]: flight-deck/tracks/*/evidence.json
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: 🔌
+            - generic [ref=e118]: MCPs
+          - generic [ref=e119]: Not yet instrumented — no MCP call-volume tracking exists in this instance.
+        - generic [ref=e120]:
+          - generic [ref=e122]:
+            - generic [ref=e123]: 📊
+            - generic [ref=e124]: Tokens
+          - generic [ref=e125]:
+            - text: Not yet instrumented — adapter
+            - code [ref=e126]: tokensUsed
+            - text: events aren't persisted/aggregated yet.
+        - generic [ref=e127]:
+          - generic [ref=e129]:
+            - generic [ref=e130]: 💰
+            - generic [ref=e131]: Spend
+          - generic [ref=e132]: Not yet instrumented — no per-model pricing/spend tracking exists in this instance.

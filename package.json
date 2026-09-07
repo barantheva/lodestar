@@ -1,0 +1,17 @@
+{
+  "name": "lodestar",
+  "version": "0.1.0",
+  "description": "Autonomous Spec-Driven Multi-Repo Software Factory for Vibecoders",
+  "type": "module",
+  "main": "src/cli/index.ts",
+  "scripts": {
+    "start": "bun run src/cli/index.ts",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.5.0"
+  }
+}
