@@ -39,6 +39,8 @@ import { renderLoginPage } from './features/auth/ui/login-page.ts';
 import { validateUserSession } from './features/auth/use-cases/validate-user-session.ts';
 import { loginUser } from './features/auth/use-cases/login-user.ts';
 
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
 function notBuiltPage(screen: string): string {
   return `<div class="card"><div class="empty-state">Screen "${screen}" isn't wired to the dashboard server yet.</div></div>`;
 }
@@ -51,6 +53,11 @@ export function createDashboardServer(deps: DashboardDeps) {
     hostname: deps.hostname,
     async fetch(req) {
       const url = new URL(req.url);
+
+      // Loopback bind alone doesn't stop DNS rebinding: a rebound attacker domain still reaches 127.0.0.1.
+      if (deps.hostname === '127.0.0.1' && !LOOPBACK_HOSTS.has(url.hostname)) {
+        return new Response('Misdirected Request', { status: 421 });
+      }
 
       // Public /login endpoint
       if (url.pathname === '/login') {
