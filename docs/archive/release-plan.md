@@ -1,3 +1,5 @@
+> **Archived**: superseded by the actual deployment decision. `architecture.md`/`plan.md`/`deployment.md` commit to a single AWS EC2 instance under systemd — the GCP/Vercel/Replit topologies and Terraform setup below were never built and aren't planned; treat them as abandoned exploration, not a roadmap. `deployment.md` is the current source of truth for deployment.
+
 # Lodestar: Multi-Platform Release Plan & Cloud Onboarding Guide
 
 > **Production Release Roadmap, Multi-Cloud Deployment Topologies (AWS, Google Cloud, Vercel, Replit), Existing Product Onboarding Workflows, and Automated Release Lifecycle.**

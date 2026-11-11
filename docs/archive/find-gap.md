@@ -1,3 +1,5 @@
+> **Archived**: closed code-review record, kept for history only — not a live doc. All 5 findings are fixed in the current codebase.
+
 # Code Review: `session-memory.ts` + Knowledge Backends
 
 **Status: all 5 findings fixed.** Suite now 94/94 passing (`bun test`), no type errors (`tsc --noEmit`). Findings below kept as-written (historical record); see the end of each for what changed.

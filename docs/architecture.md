@@ -1,7 +1,7 @@
 # Lodestar: Architectural Design Specification
 
 > **Comprehensive Architectural Design applying Archy Principles, Modular Agentic Architecture & Multi-Agent Software Factory Patterns**
-> Incorporating **Hanoi Rainbow** (Spec-Driven Development), **Relay** (Guard & Archetype Methodology), **MonoCode & Machinist** (Multi-Agent Process Factory & VM Harness), **CodeGraph & Graft** (Repository Knowledge Intelligence), **Multi-Model Adapters** (Claude, Gemini, Kimi, DeepSeek), **Token & Rate-Limit Sentinel**, and **Plugin System with Event Bus**.
+> Incorporating **Hanoi Rainbow** (Spec-Driven Development), **Relay** (Guard & Archetype Methodology), **MonoCode & Machinist** (Multi-Agent Process Factory & VM Harness), **CodeGraph & Graft** (Repository Knowledge Intelligence), **Multi-Model Adapters** (Claude, Gemini, Kimi, DeepSeek, OpenAI), **Token & Rate-Limit Sentinel**, and **Plugin System with Event Bus**.
 
 ![Lodestar Archify Architecture Diagram](file:///Users/ragu/Code/Lodestar/docs/architecture-diagram.png)
 
@@ -43,7 +43,8 @@ src/
 │   ├── anthropic-adapter.ts       # Claude Code CLI headless runner
 │   ├── gemini-adapter.ts          # Google Gemini 2.5 Pro runner
 │   ├── kimi-adapter.ts            # Moonshot Kimi (128k) runner
-│   └── deepseek-adapter.ts        # DeepSeek runner
+│   ├── deepseek-adapter.ts        # DeepSeek runner
+│   └── openai-adapter.ts          # OpenAI runner
 ├── dashboard/                     # Lodestar live operations monitor (:3000)
 └── config/                        # .env loader and system settings
 ```
@@ -98,7 +99,7 @@ Lodestar implements **true modularity** with a plugin system, service-oriented a
 
 2. **Plugin-Based Architecture**: Agents, tools, and memory stores implement strict interface contracts and register dynamically with the `ServiceRegistry`.
 3. **Interface Segregation**: Clean separation between agent execution (`agent-interface.ts`), tool invocation (`tool-interface.ts`), and persistent recall (`memory-interface.ts`).
-4. **Dependency Injection**: Services receive adapters and memory stores at runtime, allowing zero-friction model swapping (Claude ↔ Gemini ↔ Kimi ↔ DeepSeek).
+4. **Dependency Injection**: Services receive adapters and memory stores at runtime, allowing zero-friction model swapping (Claude ↔ Gemini ↔ Kimi ↔ DeepSeek ↔ OpenAI).
 5. **Event-Driven Communication**: All lifecycle events (job started, task finished, rate-limit hit, quota refreshed, PR created) stream through the asynchronous `EventBus`.
 6. **Hot-Swappable Components**: Adapters and plugins can be updated, enabled, or reloaded without restarting the background daemon.
 

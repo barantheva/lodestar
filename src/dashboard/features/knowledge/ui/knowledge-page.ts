@@ -1,4 +1,5 @@
 import type { KnowledgeSnapshot } from '../use-cases/get-knowledge-snapshot.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 export function renderKnowledgePage(data: KnowledgeSnapshot): string {
   if (!data.graph) {
@@ -6,8 +7,8 @@ export function renderKnowledgePage(data: KnowledgeSnapshot): string {
       <div class="card">
         <div class="card-header"><div class="card-title-group"><span class="card-icon">🌲</span><span class="card-title">Repository Knowledge</span></div></div>
         <div class="empty-state">
-          ${data.repo ? `No cached graph for <code>${data.repo}</code> yet.` : 'No repository configured.'}
-          Run <code>lodestar init-knowledge --repo ${data.repo || '&lt;owner/repo&gt;'}</code> to populate this screen.
+          ${data.repo ? `No cached graph for <code>${escapeHtml(data.repo)}</code> yet.` : 'No repository configured.'}
+          Run <code>lodestar init-knowledge --repo ${data.repo ? escapeHtml(data.repo) : '&lt;owner/repo&gt;'}</code> to populate this screen.
         </div>
       </div>
     `;
@@ -15,7 +16,7 @@ export function renderKnowledgePage(data: KnowledgeSnapshot): string {
 
   const symbolRows = data.graph.symbols
     .slice(0, 30)
-    .map(s => `<li><span class="tree-symbol">${s.name}</span><span class="tree-type">${s.kind} · ${s.file}:${s.line}</span></li>`)
+    .map(s => `<li><span class="tree-symbol">${escapeHtml(s.name)}</span><span class="tree-type">${escapeHtml(s.kind)} · ${escapeHtml(s.file)}:${s.line}</span></li>`)
     .join('\n');
 
   return `
@@ -31,7 +32,7 @@ export function renderKnowledgePage(data: KnowledgeSnapshot): string {
       <div class="card">
         <div class="card-header"><div class="card-title-group"><span class="card-icon">🗺️</span><span class="card-title">File Tree</span></div></div>
         <div class="bar-list">
-          ${data.graph.fileTree.slice(0, 15).map(f => `<div class="bar-row"><span class="bar-label">${f}</span></div>`).join('\n')}
+          ${data.graph.fileTree.slice(0, 15).map(f => `<div class="bar-row"><span class="bar-label">${escapeHtml(f)}</span></div>`).join('\n')}
         </div>
       </div>
     </div>
@@ -40,7 +41,7 @@ export function renderKnowledgePage(data: KnowledgeSnapshot): string {
       <div class="empty-state">Nothing has been indexed into a solution-history collection yet — no past-fix reuse tracking exists in this codebase.</div>
       <div class="card-footer">
         <span>Graft runs local-only (stdio, same host as the worker) — see architecture.md §3</span>
-        <span>Snapshot cached ${new Date(data.graph.updatedAt).toLocaleString()}, repo: <code>${data.repo}</code></span>
+        <span>Snapshot cached ${new Date(data.graph.updatedAt).toLocaleString()}, repo: <code>${escapeHtml(data.repo || '')}</code></span>
       </div>
     </div>
   `;

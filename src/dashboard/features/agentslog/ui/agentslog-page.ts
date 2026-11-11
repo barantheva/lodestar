@@ -1,4 +1,5 @@
 import type { AgentsLogData } from '../use-cases/get-agents-log.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 export function renderAgentsLogPage(data: AgentsLogData): string {
   if (!data.backendConfigured) {
@@ -12,9 +13,9 @@ export function renderAgentsLogPage(data: AgentsLogData): string {
   const lines = data.entries
     .map(e => {
       const time = new Date(e.timestamp).toLocaleTimeString();
-      const track = e.trackId ? `<span class="badge-pill">${e.trackId}</span> ` : '';
-      const stage = e.stage ? `[${e.stage}] ` : '';
-      return `<span class="muted">${time}</span> <span class="ok">[${e.agentName}]</span> ${track}${stage}${e.message}`;
+      const track = e.trackId ? `<span class="badge-pill">${escapeHtml(e.trackId)}</span> ` : '';
+      const stage = e.stage ? `[${escapeHtml(e.stage)}] ` : '';
+      return `<span class="muted">${time}</span> <span class="ok">[${escapeHtml(e.agentName)}]</span> ${track}${stage}${escapeHtml(e.message)}`;
     })
     .join('<br>\n');
 

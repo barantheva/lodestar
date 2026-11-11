@@ -1,13 +1,13 @@
 # Lodestar & LoadstoneNexus: Master Product Plan
 
 > **The Open-Source Autonomous Software Factory for Vibecoders — One Person, or a Small Team**
-> Synthesizing **Hanoi Rainbow** (Spec-Driven Development), **Relay** (Guard & Archetype Methodology), **MonoCode** (Agent Process Harness & Session Continuity), **Machinist** (VM Software Factory & 4-Login Model), **CodeGraph & Graft** (AST Code Graph & Repo Maps), **LodestarMemory** (Cross-Session Memory Bank & Living Docs), **Modular Agentic Architecture** (Plugins, Event Bus, Interfaces), and **Multi-Model Auto-Coders** (Claude, Gemini, Kimi, DeepSeek) with **Rate-Limit Sentinel**, **Fleet Supervision**, **Metrics & Rollback Engine**, and **LoadstoneNexus Central Storage**.
+> Synthesizing **Hanoi Rainbow** (Spec-Driven Development), **Relay** (Guard & Archetype Methodology), **MonoCode** (Agent Process Harness & Session Continuity), **Machinist** (VM Software Factory & 4-Login Model), **CodeGraph & Graft** (AST Code Graph & Repo Maps), **LodestarMemory** (Cross-Session Memory Bank & Living Docs), **Modular Agentic Architecture** (Plugins, Event Bus, Interfaces), and **Multi-Model Auto-Coders** (Claude, Gemini, Kimi, DeepSeek, OpenAI) with **Rate-Limit Sentinel**, **Fleet Supervision**, **Metrics & Rollback Engine**, and **LoadstoneNexus Central Storage**.
 
 ---
 
 ## 1. Executive Summary & Vision
 
-**Lodestar** is an autonomous software factory built for vibecoders — a solo builder or a small team leaning on AI to ship, without a dedicated ops/QA org backing them up. Three things it does, continuously: **monitor** production for incidents (Sentry/CloudWatch/SigNoz), **fix issues** filed on GitHub, and **check code changes** as they land (Codebase Monitor re-indexing and catching regressions). It builds a repository knowledge base with CodeGraph and Graft; produces formal specifications before writing code; executes fixes with multi-model auto-coders (Claude, Gemini, Kimi, DeepSeek); routes every track through Relay's Guard 1/2/3 methodology — relaxed to a self-signed solo mode for a one-person team, or Relay's real independence rule once there's an actual Analyst and Lead (`architecture.md` §1); handles token rate-limits through a per-agent auto-wait sentinel; and opens (or updates) verified, evidence-certified Pull Requests.
+**Lodestar** is an autonomous software factory built for vibecoders — a solo builder or a small team leaning on AI to ship, without a dedicated ops/QA org backing them up. Three things it does, continuously: **monitor** production for incidents (Sentry/CloudWatch/SigNoz), **fix issues** filed on GitHub, and **check code changes** as they land (Codebase Monitor re-indexing and catching regressions). It builds a repository knowledge base with CodeGraph and Graft; produces formal specifications before writing code; executes fixes with multi-model auto-coders (Claude, Gemini, Kimi, DeepSeek, OpenAI); routes every track through Relay's Guard 1/2/3 methodology — relaxed to a self-signed solo mode for a one-person team, or Relay's real independence rule once there's an actual Analyst and Lead (`architecture.md` §1); handles token rate-limits through a per-agent auto-wait sentinel; and opens (or updates) verified, evidence-certified Pull Requests.
 
 ---
 
@@ -91,21 +91,21 @@ gantt
 ---
 
 ## 6. Definition of Success (DoD)
-- [ ] Multi-repo configuration via `GITHUB_REPO`/`ISSUE_LABEL_FILTER`, with a true multi-repo poller fanning out across several repos from one daemon.
-- [ ] Cross-repo fan-out: a track whose fix touches a shared contract discovers affected repos via LoadstoneNexus's stored per-repo knowledge, spawns one child track per repo, processes them sequentially, and opens one PR per repo, cross-referenced for traceability.
-- [ ] Central persistent data store at a configurable `$DATA_DIR`, accessed exclusively through a LoadstoneNexus MCP server (`persist_knowledge`/`retrieve_knowledge`) — no service reads/writes `$DATA_DIR` files directly.
-- [ ] Hanoi Rainbow SDD generating `intent.md`, `spec.md`, `design.md`, `plan.md` per track in `flight-deck/tracks/<track_id>/`, before any code changes.
-- [ ] Relay Guard 1/2/3 enforced on every track: Analyst-certified `intent.md`, agent-self-signed `plan.md` (human sign on gated paths), Lead-certified evidence pack (`guard-evidence.md` + `evidence.json`) — no bypass on Guard 3, ever.
-- [ ] The 4-agent pipeline (`relay-implementer`, `relay-stop-slop`, `relay-reviewer`, `relay-auditor`) producing `guard-evidence.md`/`evidence.json` for every track.
-- [ ] Multi-model auto-coders with session continuity (Claude, Gemini, Kimi, DeepSeek, OpenAI), one provider per agent role, configurable per-agent.
-- [ ] Rate-Limit Sentinel, per agent, with a persisted hold schedule in the local Fleet DB (SQLite) that survives a worker restart — not an in-memory timer.
-- [ ] Named multi-worker fleet supervisor monitoring PID, RSS, CPU, heartbeat, and auto-restart, backed by the local Fleet DB.
-- [ ] Agent count, per-agent model provider, and per-agent job assignment (Incident/Issue/Codebase Monitor/Instrumentation Campaign), configurable at deploy time and live from the dashboard.
-- [ ] VM deployment script with systemd unit and unprivileged-user hardening, per `deployment.md`.
-- [ ] Lodestar multi-screen Live Operations Dashboard, the full screen catalog in `screen-list.md`.
-- [ ] Real-time calculation engine computing Cycle Time, Evidence Completeness, Lead Sign-Off Velocity, and Rollback Rates.
-- [ ] Pluggable knowledge backend (`KNOWLEDGE_BACKEND=loadstonenexus|obsidian`) behind one `memory-interface.ts` contract — switching backends is a config change, no caller special-cases either one (`architecture.md` §3).
-- [ ] Release Tracking & Tagging: per-repo tag creation (`dd-mm-yyyy-<short commit hash>`) with an auto-drafted, auto-named changelog (`change-log-<tag>.md`) committed alongside it, and a Release Tracker screen listing every tag/changelog/bundled-track across repos (`architecture.md` §10, `screen-list.md` §7b–7c).
+- [x] Multi-repo configuration via `GITHUB_REPO`/`ISSUE_LABEL_FILTER`, with a true multi-repo poller fanning out across several repos from one daemon.
+- [ ] Cross-repo fan-out: a track whose fix touches a shared contract discovers affected repos via LoadstoneNexus's stored per-repo knowledge, spawns one child track per repo, processes them sequentially, and opens one PR per repo, cross-referenced for traceability. **Deferred** — Instrumentation Campaign fan-out isn't wired to real execution yet (`monitorsetup-page.ts`).
+- [x] Central persistent data store at a configurable `$DATA_DIR`, accessed exclusively through a LoadstoneNexus MCP server (`persist_knowledge`/`retrieve_knowledge`) — no service reads/writes `$DATA_DIR` files directly.
+- [x] Hanoi Rainbow SDD generating `intent.md`, `spec.md`, `design.md`, `plan.md` per track in `flight-deck/tracks/<track_id>/`, before any code changes.
+- [x] Relay Guard 1/2/3 enforced on every track: Analyst-certified `intent.md`, agent-self-signed `plan.md` (human sign on gated paths), Lead-certified evidence pack (`guard-evidence.md` + `evidence.json`) — no bypass on Guard 3, ever.
+- [x] The 4-agent pipeline (`relay-implementer`, `relay-stop-slop`, `relay-reviewer`, `relay-auditor`) producing `guard-evidence.md`/`evidence.json` for every track.
+- [x] Multi-model auto-coders with session continuity (Claude, Gemini, Kimi, DeepSeek, OpenAI), one provider per agent role, configurable per-agent.
+- [x] Rate-Limit Sentinel, per agent, with a persisted hold schedule in the local Fleet DB (SQLite) that survives a worker restart — not an in-memory timer.
+- [x] Named multi-worker fleet supervisor monitoring PID, RSS, CPU, heartbeat, and auto-restart, backed by the local Fleet DB.
+- [x] Agent count, per-agent model provider, and per-agent job assignment (Incident/Issue/Codebase Monitor/Instrumentation Campaign), configurable at deploy time and live from the dashboard.
+- [ ] VM deployment script with systemd unit and unprivileged-user hardening, per `deployment.md`. **Not started** — no `deploy/` directory yet.
+- [x] Lodestar multi-screen Live Operations Dashboard, the full screen catalog in `screen-list.md` (16 screens).
+- [x] Real-time calculation engine computing Cycle Time, Evidence Completeness, Lead Sign-Off Velocity, and Rollback Rates.
+- [x] Pluggable knowledge backend (`KNOWLEDGE_BACKEND=loadstonenexus|obsidian`) behind one `memory-interface.ts` contract — switching backends is a config change, no caller special-cases either one (`architecture.md` §3).
+- [x] Release Tracking & Tagging: per-repo tag creation (`dd-mm-yyyy-<short commit hash>`) with an auto-drafted, auto-named changelog (`change-log-<tag>.md`) committed alongside it, and a Release Tracker screen listing every tag/changelog/bundled-track across repos (`architecture.md` §10, `screen-list.md` §7b–7c).
 
 ---
 

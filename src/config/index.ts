@@ -33,6 +33,21 @@ export interface Config {
   whatsappBroadcastList: string[];
   smtpUrl?: string;
   alertEmailTo: string[];
+  clarityApiToken?: string;
+  clarityMinRageClicks: number;
+  clarityMinDeadClicks: number;
+  clarityMinJsExceptions: number;
+  clarityMinQuickBacks: number;
+  clarityMinExcessiveScroll: number;
+  clarityMinFrustrationScore: number;
+  clarityLookbackHours: number;
+  clarityBatchIntervalHours: number;
+  dashboardAdminPassword?: string;
+}
+
+function numEnv(raw: string | undefined, fallback: number): number {
+  const n = Number.parseFloat(raw ?? '');
+  return Number.isFinite(n) ? n : fallback;
 }
 
 export function parseDotEnv(content: string): Record<string, string> {
@@ -137,7 +152,8 @@ export function loadConfig(envOverride?: Record<string, string | undefined>): Co
   const leadName = env.LEAD_NAME?.trim() || undefined;
   const allowAutonomousIncidentDeclaration = env.ALLOW_AUTONOMOUS_INCIDENT_DECLARATION === 'true' || env.ALLOW_AUTONOMOUS_INCIDENT_DECLARATION === '1';
 
-  const parsedPort = env.PORT !== undefined ? parseInt(env.PORT, 10) : NaN;
+  const rawPort = env.PORT ?? env.DASHBOARD_PORT;
+  const parsedPort = rawPort !== undefined ? parseInt(rawPort, 10) : NaN;
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
   const parsedAgentCount = env.AGENT_COUNT !== undefined ? parseInt(env.AGENT_COUNT, 10) : NaN;
   const agentCount = Number.isFinite(parsedAgentCount) ? parsedAgentCount : 3;
@@ -187,5 +203,15 @@ export function loadConfig(envOverride?: Record<string, string | undefined>): Co
     alertEmailTo: env.ALERT_EMAIL_TO
       ? env.ALERT_EMAIL_TO.split(',').map(s => s.trim()).filter(Boolean)
       : [],
+    clarityApiToken: env.CLARITY_API_TOKEN?.trim() || undefined,
+    clarityMinRageClicks: numEnv(env.CLARITY_MIN_RAGE_CLICKS, 20),
+    clarityMinDeadClicks: numEnv(env.CLARITY_MIN_DEAD_CLICKS, 30),
+    clarityMinJsExceptions: numEnv(env.CLARITY_MIN_JS_EXCEPTIONS, 15),
+    clarityMinQuickBacks: numEnv(env.CLARITY_MIN_QUICK_BACKS, 30),
+    clarityMinExcessiveScroll: numEnv(env.CLARITY_MIN_EXCESSIVE_SCROLL, 30),
+    clarityMinFrustrationScore: numEnv(env.CLARITY_MIN_FRUSTRATION_SCORE, 0.65),
+    clarityLookbackHours: numEnv(env.CLARITY_LOOKBACK_HOURS, 24),
+    clarityBatchIntervalHours: numEnv(env.CLARITY_BATCH_INTERVAL_HOURS || env.CLARITY_POLL_INTERVAL_HOURS, 4),
+    dashboardAdminPassword: env.DASHBOARD_ADMIN_PASSWORD || undefined,
   };
 }

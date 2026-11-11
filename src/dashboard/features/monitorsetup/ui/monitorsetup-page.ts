@@ -1,8 +1,9 @@
 import type { MonitorSetupData } from '../use-cases/get-monitor-setup.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 export function renderMonitorSetupPage(data: MonitorSetupData): string {
   const repoCheckboxes = data.repos.length
-    ? data.repos.map(r => `<label style="display:flex; align-items:center; gap:6px; font-size:12px;"><input type="checkbox" name="repos" value="${r}"> ${r}</label>`).join('\n')
+    ? data.repos.map(r => `<label style="display:flex; align-items:center; gap:6px; font-size:12px;"><input type="checkbox" name="repos" value="${escapeHtml(r)}"> ${escapeHtml(r)}</label>`).join('\n')
     : `<div class="empty-state">No repositories configured — set GITHUB_REPO to select targets for a campaign.</div>`;
 
   return `

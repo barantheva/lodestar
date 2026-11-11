@@ -1,5 +1,6 @@
 import type { FleetStatusData } from '../use-cases/get-fleet-status.ts';
 import type { WorkerState } from '../../../../services/agent-service/fleet-db.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 const STATE_DOT: Record<WorkerState, string> = {
   running: 'state-running',
@@ -19,15 +20,15 @@ export function renderFleetPage(data: FleetStatusData): string {
   const rows = data.workers
     .map(
       w => `<tr>
-        <td>${w.name}</td>
-        <td>${w.job}</td>
-        <td>${w.provider}</td>
+        <td>${escapeHtml(w.name)}</td>
+        <td>${escapeHtml(w.job)}</td>
+        <td>${escapeHtml(w.provider)}</td>
         <td><span class="state-dot ${STATE_DOT[w.state]}"></span>${w.state}</td>
         <td>${w.pid ?? '—'}</td>
         <td>${w.rssMb ? `${w.rssMb} MB` : '—'}</td>
         <td>${w.cpuPct ?? '—'}</td>
         <td>${heartbeatAge(w.lastHeartbeat)}</td>
-        <td>${w.worktree ?? '—'}</td>
+        <td>${w.worktree ? escapeHtml(w.worktree) : '—'}</td>
       </tr>`
     )
     .join('\n');

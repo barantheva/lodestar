@@ -47,6 +47,19 @@ describe('Dashboard Server Authentication', () => {
     server.stop();
   });
 
+  it('reflects the error and returnUrl query params on /login as inert text, not executable markup', async () => {
+    const deps = createTestDeps();
+    const server = createDashboardServer(deps);
+
+    const payload = '<script>alert(document.cookie)</script>';
+    const res = await server.fetch(new Request(`http://localhost/login?error=${encodeURIComponent(payload)}&returnUrl=${encodeURIComponent('"><script>alert(1)</script>')}`));
+    const html = await res.text();
+
+    expect(html).not.toContain('<script>alert');
+    expect(html).toContain('&lt;script&gt;');
+    server.stop();
+  });
+
   it('rejects POST /login with invalid credentials with 401', async () => {
     const deps = createTestDeps();
     const server = createDashboardServer(deps);

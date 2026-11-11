@@ -50,4 +50,4 @@ Same rules as `CLAUDE.md` — read that file for the full list (architectural ru
 - `mock-ui.html` is the dashboard's executable spec — a screen isn't done until it matches it with real data.
 - Comments: default none; max 3 lines when warranted, explain *why* not *what*; never strip a license header or tool directive.
 - Tests co-located (`<name>.test.ts`), `bun test`; cross-feature E2E in top-level `e2e/`.
-- Status: zero implementation yet — check `impl.md` §3 for the current phase before writing `src/` code.
+- Status: implemented (16 dashboard screens, full Guard 1/2/3 pipeline, 5 model adapters, Clarity `behavior-monitor` worker awaiting a live Clarity run, 286 tests passing; open items in `docs/progress.md`) — check `impl.md` §3 for which phase a change belongs to.

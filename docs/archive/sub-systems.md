@@ -1,3 +1,5 @@
+> **Archived**: predates the real implementation and drifted from it (e.g. `src/features/release-tracker/` never existed — release tracking actually lives in `src/dashboard/features/releases`/`releasenew` and `src/plugins/tools/git-tool.ts`; the model/screen lists are stale). `architecture.md` §1 is the current, accurate module map — use that instead.
+
 # Lodestar: Subsystem Architecture & Changes Required Specification
 
 > **Comprehensive breakdown of every Lodestar subsystem, defining architectural responsibilities, data flow contracts, interface boundaries, and the concrete changes required to implement each component from baseline to production.**

@@ -11,7 +11,9 @@ export type EventBusEventType =
   | 'track.deployed'
   | 'deploy.rollback'
   | 'worker.heartbeat'
-  | 'metric.updated';
+  | 'metric.updated'
+  | 'behavior.anomaly_detected'
+  | 'behavior.issue_created';
 
 export type EventPayloads = {
   'track.opened': { trackId: string; archetype: 'A' | 'B' | 'C' | 'H'; jobType: string; repo?: string };
@@ -31,6 +33,19 @@ export type EventPayloads = {
   'deploy.rollback': { trackId: string; repo: string; reason: string; revertedCommit: string };
   'worker.heartbeat': { workerName: string; rssMb: number; cpuPct: number };
   'metric.updated': { metric: string; value: unknown };
+  'behavior.anomaly_detected': {
+    repo: string;
+    frictionType: string;
+    url: string;
+    selector?: string;
+    metrics: Record<string, number>;
+  };
+  'behavior.issue_created': {
+    repo: string;
+    issueNumber: number;
+    issueUrl: string;
+    frictionType: string;
+  };
 };
 
 export type EventCallback<T extends EventBusEventType> = (payload: EventPayloads[T]) => void | Promise<void>;

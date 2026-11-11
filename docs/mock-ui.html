@@ -447,10 +447,11 @@
                     <span class="conn-tag ok">● GitHub Webhooks: Connected (Active)</span>
                     <span class="conn-tag ok">● Sentry DSN: Connected (Prod)</span>
                     <span class="conn-tag ok">● SigNoz / CloudWatch: Streaming</span>
+                    <span class="conn-tag ok">● Microsoft Clarity MCP: Connected (Batch 4h default)</span>
                   </div>
                   <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-top: 8px; margin-bottom: 4px;">Stage Requirements:</div>
                   <ul>
-                    <li><strong>GitHub Webhook Connection</strong>: Ingests issues and exception events; PII scrubber armed on incoming payloads.</li>
+                    <li><strong>GitHub Webhooks &amp; Clarity Ingestion</strong>: Ingests issues, exception events, and Clarity behavioral telemetry (rage/dead clicks); PII scrubber armed on incoming payloads.</li>
                     <li><strong>Archetype Routing Invariant</strong>: Classifies track into Archetype A, B, C (reproducible bug fix), or H (Sev-0/1 incident).</li>
                     <li><strong>Baton Initialization</strong>: Allocates track ID in <code>flight-deck/tracks/&lt;track_id&gt;/</code> and opens the Bolt lifecycle.</li>
                   </ul>
@@ -880,11 +881,12 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title-group"><span class="card-icon">🔌</span><span class="card-title">MCPs</span></div>
-                <div><span class="card-stat">116</span><span class="card-stat-label"> · CALLS 30D</span></div>
+                <div><span class="card-stat">148</span><span class="card-stat-label"> · CALLS 30D</span></div>
               </div>
               <div class="bar-list">
-                <div class="bar-row"><span class="bar-label">codegraph</span><div class="bar-track"><div class="bar-fill" style="width: 70%;"></div></div><span class="bar-meta">81 · 0.0% err</span></div>
-                <div class="bar-row"><span class="bar-label">graft (local)</span><div class="bar-track"><div class="bar-fill" style="width: 30%;"></div></div><span class="bar-meta">35 · 2.9% err</span></div>
+                <div class="bar-row"><span class="bar-label">codegraph</span><div class="bar-track"><div class="bar-fill" style="width: 55%;"></div></div><span class="bar-meta">81 · 0.0% err</span></div>
+                <div class="bar-row"><span class="bar-label">clarity (behavior)</span><div class="bar-track"><div class="bar-fill" style="width: 28%;"></div></div><span class="bar-meta">32 · 0.0% err</span></div>
+                <div class="bar-row"><span class="bar-label">graft (local)</span><div class="bar-track"><div class="bar-fill" style="width: 24%;"></div></div><span class="bar-meta">35 · 2.9% err</span></div>
               </div>
             </div>
             <div class="card">
@@ -899,12 +901,12 @@
               </div>
               <div class="card-footer">
                 <span>Spend: <strong>$11.90</strong></span>
-                <span>Model: <strong>Claude</strong></span>
+                <span>Model: <strong>Claude &amp; OpenAI</strong></span>
               </div>
             </div>
           </div>
           <div class="card-footer">
-            <span>6 tracks resolved · agent: <strong>worker-3</strong></span>
+            <span>7 tracks resolved · agents: <strong>worker-3 (issue-resolver)</strong>, <strong>worker-4 (behavior-monitor)</strong></span>
             <span>Guard docs: <a href="#memories" class="guard-doc-link">📁 view</a></span>
           </div>
         </div>
@@ -975,9 +977,11 @@
               <div class="bar-row"><span class="bar-label">Sentry (prod)</span><span class="bar-meta" style="width:auto;">streaming</span></div>
               <div class="bar-row"><span class="bar-label">CloudWatch</span><span class="bar-meta" style="width:auto;">streaming</span></div>
               <div class="bar-row"><span class="bar-label">SigNoz (traces)</span><span class="bar-meta" style="width:auto;">latency/error alerts</span></div>
+              <div class="bar-row"><span class="bar-label">Microsoft Clarity</span><span class="bar-meta" style="width:auto;">rage/dead clicks (batch)</span></div>
             </div>
             <div class="log-block" style="margin-bottom: 8px;">
-              <span class="muted">[intake]</span> 42 auth-error events -&gt; Track <code>track-casbin-128</code> (Archetype C)
+              <span class="muted">[intake]</span> 42 auth-error events -&gt; Track <code>track-casbin-128</code> (Archetype C)<br>
+              <span class="muted">[intake]</span> 38 rage-clicks on button#pay-now -&gt; Track <code>track-dashboards-135</code> (Archetype B)
             </div>
 
             <!-- Expandable Requirement Box: Stage 1 -->
@@ -988,7 +992,7 @@
               </summary>
               <div class="guard-details-content">
                 <ul>
-                  <li><strong>Ingestion Streams</strong>: Ingests exceptions, trace anomalies, and issue events from Sentry, CloudWatch, SigNoz, and GitHub.</li>
+                  <li><strong>Ingestion Streams</strong>: Ingests exceptions, trace anomalies, behavioral telemetry (Microsoft Clarity rage/dead clicks), and issue events from Sentry, CloudWatch, SigNoz, Microsoft Clarity MCP, and GitHub.</li>
                   <li><strong>Archetype Routing</strong>:
                     <ul>
                       <li><code>A</code>: New/ambiguous surface (full Guard 1 + Guard 2).</li>
@@ -1483,7 +1487,7 @@
               <button class="action-btn primary">+ Agent</button>
             </div>
           </div>
-          <div class="card-subtitle">3 of 3 configured (<code>AGENT_COUNT=3</code>) — job and model are editable here; changes write back to the per-agent deployment config.</div>
+          <div class="card-subtitle">4 of 4 configured (<code>AGENT_COUNT=4</code>) — job and model are editable here; changes write back to the per-agent deployment config.</div>
           <table class="worker-table">
             <thead>
               <tr><th>Worker</th><th>Job</th><th>Model</th><th>State</th><th>PID</th><th>RSS</th><th>CPU%</th><th>Heartbeat</th><th>Worktree</th><th></th></tr>
@@ -1497,6 +1501,7 @@
                     <option>issue-monitor</option>
                     <option>codebase-monitor</option>
                     <option>instrumentation-campaign</option>
+                    <option>behavior-monitor</option>
                   </select>
                 </td>
                 <td>
@@ -1505,6 +1510,7 @@
                     <option>deepseek</option>
                     <option>gemini</option>
                     <option>kimi</option>
+                    <option>openai</option>
                   </select>
                 </td>
                 <td><span class="state-dot state-running"></span>running</td>
@@ -1519,6 +1525,8 @@
                     <option>incident-monitor</option>
                     <option selected>issue-monitor</option>
                     <option>codebase-monitor</option>
+                    <option>instrumentation-campaign</option>
+                    <option>behavior-monitor</option>
                   </select>
                 </td>
                 <td>
@@ -1527,6 +1535,7 @@
                     <option selected>deepseek</option>
                     <option>gemini</option>
                     <option>kimi</option>
+                    <option>openai</option>
                   </select>
                 </td>
                 <td><span class="state-dot state-paused"></span>paused_rate_limited</td>
@@ -1541,6 +1550,8 @@
                     <option>incident-monitor</option>
                     <option>issue-monitor</option>
                     <option selected>codebase-monitor</option>
+                    <option>instrumentation-campaign</option>
+                    <option>behavior-monitor</option>
                   </select>
                 </td>
                 <td>
@@ -1549,12 +1560,38 @@
                     <option>deepseek</option>
                     <option>gemini</option>
                     <option>kimi</option>
+                    <option>openai</option>
                   </select>
                 </td>
                 <td><span class="state-dot state-idle"></span>idle</td>
                 <td>—</td><td>—</td><td>—</td><td>—</td>
                 <td>—</td>
                 <td class="worker-actions"><button class="action-btn">Assign</button></td>
+              </tr>
+              <tr>
+                <td>worker-4</td>
+                <td>
+                  <select class="assign-select">
+                    <option>incident-monitor</option>
+                    <option>issue-monitor</option>
+                    <option>codebase-monitor</option>
+                    <option>instrumentation-campaign</option>
+                    <option selected>behavior-monitor</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="assign-select">
+                    <option>claude</option>
+                    <option>deepseek</option>
+                    <option>gemini</option>
+                    <option>kimi</option>
+                    <option selected>openai</option>
+                  </select>
+                </td>
+                <td><span class="state-dot state-running"></span>running</td>
+                <td>48295</td><td>285 MB</td><td>12%</td><td>1s ago</td>
+                <td>clarity:dashboards#ux</td>
+                <td class="worker-actions"><button class="action-btn">Restart</button><button class="action-btn danger">Kill</button></td>
               </tr>
             </tbody>
           </table>
@@ -1785,9 +1822,19 @@
               </div>
               <div class="activity-meta"><span>Guard 1: codebase monitor, lightweight</span><span>Guard 2: self-signed (worker-2)</span><span>Guard 3: Lead certified 09-04</span></div>
             </div>
+            <div class="activity-item">
+              <div class="activity-header">
+                <span class="branch-tag">⌥ issue-135</span>
+                <span class="badge-pill badge-green">Guard 3 certified</span>
+              </div>
+              <div class="activity-meta">
+                <span><code>intent.md</code> · <code>spec.md</code> · <code>clarity-evidence.json</code> · <code>plan.md</code> · <code>guard-evidence.md</code></span>
+              </div>
+              <div class="activity-meta"><span>Guard 1: Archetype B (UX friction, Clarity session replay)</span><span>Guard 2: self-signed (worker-4)</span><span>Guard 3: Lead certified 09-08</span></div>
+            </div>
           </div>
           <div class="card-footer">
-            <span>Tracks with full document set: <strong>38 of 41</strong></span>
+            <span>Tracks with full document set: <strong>39 of 42</strong></span>
             <span>Read-only here — edited only via each track's <code>flight-deck/tracks/&lt;track_id&gt;/</code></span>
           </div>
         </div>
@@ -1863,6 +1910,11 @@
             <table class="worker-table">
               <thead><tr><th>Track</th><th>Title</th><th>Archetype</th><th>Agent</th><th>Resolved</th><th>PR</th><th>Guard docs</th><th>Notified</th></tr></thead>
               <tbody>
+                <tr>
+                  <td>issue-135</td><td>[UX Friction: Rage Clicks] button#pay-now on /checkout</td><td>B</td><td>worker-4</td><td>2026-09-08</td><td>#462 merged</td>
+                  <td><a href="#memories" class="guard-doc-link">📁 view</a></td>
+                  <td class="notify-icons"><span class="notify-icon sent">Slack</span><span class="notify-icon sent">Discord</span></td>
+                </tr>
                 <tr>
                   <td>issue-128</td><td>fix: token refresh race in gateway retries</td><td>C</td><td>agent-casbin-alpha</td><td>2026-09-05</td><td>#457 merged</td>
                   <td><a href="#memories" class="guard-doc-link">📁 view</a></td>
@@ -2080,10 +2132,13 @@
             <span class="muted">14:02:11</span> <span class="ok">[worker-2]</span> <span class="badge-pill">issue-119</span> [dev-journal] persisted -&gt; knowledge backend (loadstonenexus) · <a href="#memories" class="guard-doc-link">📁 guard docs</a><br>
             <span class="muted">14:02:40</span> <span class="ok">[worker-3]</span> <span class="badge-pill">drift-19</span> [relay-auditor] evidence pack ready, 5 files<br>
             <span class="muted">14:02:41</span> <span class="ok">[worker-3]</span> <span class="badge-pill">drift-19</span> [dev-journal] persisted -&gt; knowledge backend (loadstonenexus) · <a href="#memories" class="guard-doc-link">📁 guard docs</a><br>
-            <span class="muted">14:03:02</span> <span class="warn">[agent-casbin-alpha]</span> <span class="badge-pill">issue-131</span> [sentinel] rate limit nearing, hold scheduled (+6h fallback)
+            <span class="muted">14:03:02</span> <span class="warn">[agent-casbin-alpha]</span> <span class="badge-pill">issue-131</span> [sentinel] rate limit nearing, hold scheduled (+6h fallback)<br>
+            <span class="muted">14:03:15</span> <span class="ok">[worker-4]</span> <span class="badge-pill">clarity-ux</span> [behavior-monitor] Clarity export query: 38 rage clicks on button#pay-now (/checkout) · threshold 20 exceeded<br>
+            <span class="muted">14:03:16</span> <span class="ok">[worker-4]</span> <span class="badge-pill">issue-135</span> [behavior-monitor] Created GitHub issue #135 [UX Friction: Rage Clicks] button#pay-now on /checkout · fingerprint behavior_dashboards_rage_clicks_/checkout_button#pay-now<br>
+            <span class="muted">14:03:17</span> <span class="ok">[worker-4]</span> <span class="badge-pill">issue-135</span> [dev-journal] persisted -&gt; knowledge backend (loadstonenexus) · <a href="#memories" class="guard-doc-link">📁 guard docs</a>
           </div>
           <div class="card-footer">
-            <span>Entries today: <strong>412</strong> across 3 agents</span>
+            <span>Entries today: <strong>448</strong> across 4 agents</span>
             <span>Each line tagged by agent + track — dev-journal is project knowledge, not job/fleet state (architecture.md's local-SQLite-vs-LoadstoneNexus split)</span>
           </div>
         </div>
@@ -2205,6 +2260,7 @@
               </div>
               <select class="assign-select" style="min-width: 240px;">
                 <option selected>SigNoz / OpenTelemetry Tracing Wrappers</option>
+                <option>Microsoft Clarity Behavioral Telemetry &amp; Rage-Click Monitoring</option>
                 <option>Logtail Ingestion &amp; PII Filter Config</option>
                 <option>Shared Contract Interface Update</option>
                 <option>Dependency Version Bump &amp; Test Suite Run</option>
@@ -2238,11 +2294,79 @@
           </div>
         </div>
 
+        <!-- Microsoft Clarity Behavioral Telemetry & Issue Generation Monitor -->
+        <div class="card" style="margin-bottom: 16px; border-left: 3px solid #388bfd;">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon">⚡</span>
+              <span class="card-title">Microsoft Clarity User Behavior Monitor</span>
+              <span class="badge-pill badge-green" style="margin-left: 6px;">Batch Cadence Active</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge-pill" style="color: #79c0ff; background: rgba(56,139,253,0.15);">Quota: 3/10 daily calls</span>
+              <button class="action-btn primary" style="font-size: 11px; padding: 3px 10px;">Poll Now (Batch)</button>
+            </div>
+          </div>
+          <div class="card-subtitle">
+            Scheduled batch ingestion from Microsoft Clarity Data Export API (<code>@microsoft/clarity-mcp-server</code>). Detects high-friction UX anomalies and files verified GitHub issues with session replay links, while strictly protecting API export quotas and preventing issue spam via deterministic fingerprint deduplication.
+          </div>
+
+          <!-- Quota & Retention Safeguards Grid -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0;">
+            <div style="background: #0d1117; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 6px;">
+              <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">Batch Polling Cadence</div>
+              <div style="font-size: 13px; font-weight: 700; color: #3fb950;">4 Hours (Configurable · Default)</div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Restricts queries to ~6 calls/day vs ~10/day quota</div>
+            </div>
+            <div style="background: #0d1117; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 6px;">
+              <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">Lookback Retention Window</div>
+              <div style="font-size: 13px; font-weight: 700; color: #58a6ff;">24 Hours</div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Within Clarity 1–3 day retention horizon</div>
+            </div>
+            <div style="background: #0d1117; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 6px;">
+              <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">Spam Prevention Engine</div>
+              <div style="font-size: 13px; font-weight: 700; color: #3fb950;">Fingerprint Deduplication</div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Checks open issues with label <code>behavior</code></div>
+            </div>
+            <div style="background: #0d1117; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 6px;">
+              <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">Assigned Worker Agent</div>
+              <div style="font-size: 13px; font-weight: 700; color: #e3b341;">worker-4 (behavior-monitor)</div>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Model: OpenAI (gpt-4o) · Target: dashboards</div>
+            </div>
+          </div>
+
+          <!-- Active Anomaly Thresholds -->
+          <div style="background: #0d1117; padding: 10px 14px; border: 1px solid var(--border-light); border-radius: 6px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-white);">Active Telemetry Thresholds &amp; Issue Auto-Creation Triggers</span>
+              <span style="font-size: 10px; color: var(--text-muted);">Configurable in <code>.env</code> &amp; Configuration screen</span>
+            </div>
+            <div style="display: flex; gap: 24px; font-size: 12px;">
+              <div><span style="color: var(--text-muted);">Min Rage Clicks:</span> <strong style="color: #ffa198;">≥ 20</strong></div>
+              <div><span style="color: var(--text-muted);">Min Dead Clicks:</span> <strong style="color: #ffa198;">≥ 30</strong></div>
+              <div><span style="color: var(--text-muted);">Min Unhandled JS Exceptions:</span> <strong style="color: #ffa198;">≥ 15</strong></div>
+              <div><span style="color: var(--text-muted);">Session Replay Evidence:</span> <strong style="color: #3fb950;">Deep-link included</strong></div>
+            </div>
+          </div>
+
+          <!-- Recently Filed Anomaly Issue -->
+          <div class="log-block" style="font-size: 11px; line-height: 1.5;">
+            <span class="ok">● [clarity-batch-ingest]</span> Query completed (10:00 UTC) · 38 rage clicks detected on <code>button#pay-now</code> at <code>/checkout</code> (threshold 20 exceeded).<br>
+            <span class="ok">● [fingerprint-check]</span> Generated fingerprint <code>behavior_dashboards_rage_clicks_/checkout_button#pay-now</code>. Verified no existing open issue.<br>
+            <span class="ok">● [github-issue-created]</span> Filed issue <a href="#history" style="color: #58a6ff; font-weight: 600;">#135: [UX Friction: Rage Clicks] button#pay-now on /checkout</a> with Clarity session replay URL and selector telemetry. Event <code>behavior.issue_created</code> broadcast.
+          </div>
+
+          <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Next Clarity export run in <strong>2 hours 18 minutes</strong> · 1 issue generated today · 0 duplicates suppressed</span>
+            <span style="color: var(--text-muted);">API Quota Resets at 00:00 UTC</span>
+          </div>
+        </div>
+
         <!-- Live Campaign Execution & Batch Status -->
         <div class="card">
           <div class="card-header">
             <div class="card-title-group"><span class="card-icon">📦</span><span class="card-title">Active Campaign Runs &amp; Multi-Repo PRs</span></div>
-            <span class="badge-pill badge-green">3 Tracks Active</span>
+            <span class="badge-pill badge-green">4 Tracks Active</span>
           </div>
           <table class="worker-table">
             <thead>
@@ -2283,6 +2407,15 @@
                 <td><span style="color: var(--text-muted);">worktree-active</span></td>
                 <td><a href="#memories" class="guard-doc-link">📁 view</a></td>
                 <td><button class="action-btn" disabled>Running...</button></td>
+              </tr>
+              <tr>
+                <td>dashboards</td>
+                <td>Clarity UX Behavior Monitor</td>
+                <td>Rage / Dead clicks</td>
+                <td><span class="state-dot state-ok"></span>Issue Filed (#135)</td>
+                <td><a href="#history" style="color:#58a6ff;">#135 (open)</a></td>
+                <td><a href="#memories" class="guard-doc-link">📁 view</a></td>
+                <td><button class="action-btn">Inspect Issue</button></td>
               </tr>
             </tbody>
           </table>
@@ -2407,7 +2540,46 @@
         <div class="card" style="margin-bottom: 16px;">
           <div class="card-header">
             <div class="card-title-group"><span class="card-icon">🔭</span><span class="card-title">Observability &amp; Optional Integrations</span></div>
-            <span class="badge-pill">both deferred by default</span>
+            <span class="badge-pill badge-green">Clarity active · SigNoz/measure-sh deferred</span>
+          </div>
+          <div class="settings-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div class="settings-label">Microsoft Clarity MCP <span class="badge-pill badge-green" style="margin-left:6px;">configured · active</span></div>
+                <div class="settings-desc">Behavioral analytics MCP server (<code>@microsoft/clarity-mcp-server</code>) for user friction telemetry (rage clicks, dead clicks, JS errors). Autonomous issue generation via <code>behavior-monitor</code>.</div>
+              </div>
+              <input class="settings-input" type="password" placeholder="CLARITY_API_TOKEN · ••••" value="clarity_sec_••••••••" style="max-width: 260px;">
+            </div>
+            <!-- Sub-configuration for Clarity Quota & Thresholds -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #0d1117; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 11px;">
+              <div>
+                <div style="color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 600;">Project ID</div>
+                <input class="settings-input" style="width: 100%; margin-top: 4px; padding: 3px 8px; font-size: 11px;" value="clarity-dashboards-prod">
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 600;">Batch Cadence (Quota Safe)</div>
+                <input class="settings-input" style="width: 100%; margin-top: 4px; padding: 3px 8px; font-size: 11px;" value="4 hours (configurable · default)">
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 600;">Lookback Retention</div>
+                <input class="settings-input" style="width: 100%; margin-top: 4px; padding: 3px 8px; font-size: 11px;" value="24 hours (1-3d API limit)">
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 600;">Deduplication Engine</div>
+                <input class="settings-input" style="width: 100%; margin-top: 4px; padding: 3px 8px; font-size: 11px;" value="Fingerprint deduplication (ON)" readonly>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #0d1117; padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 11px;">
+              <div>
+                <span style="color: var(--text-muted);">Min Rage Clicks:</span> <strong style="color: #58a6ff;">20</strong>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">Min Dead Clicks:</span> <strong style="color: #58a6ff;">30</strong>
+              </div>
+              <div>
+                <span style="color: var(--text-muted);">Min JS Exceptions:</span> <strong style="color: #58a6ff;">15</strong>
+              </div>
+            </div>
           </div>
           <div class="settings-row">
             <div>
@@ -2439,18 +2611,23 @@
             <tbody>
               <tr>
                 <td>agent-1</td>
-                <td><select class="assign-select"><option selected>incident-monitor</option><option>issue-monitor</option><option>codebase-monitor</option></select></td>
-                <td><select class="assign-select"><option selected>claude</option><option>deepseek</option><option>gemini</option><option>kimi</option></select></td>
+                <td><select class="assign-select"><option selected>incident-monitor</option><option>issue-monitor</option><option>codebase-monitor</option><option>instrumentation-campaign</option><option>behavior-monitor</option></select></td>
+                <td><select class="assign-select"><option selected>claude</option><option>deepseek</option><option>gemini</option><option>kimi</option><option>openai</option></select></td>
               </tr>
               <tr>
                 <td>agent-2</td>
-                <td><select class="assign-select"><option>incident-monitor</option><option selected>issue-monitor</option><option>codebase-monitor</option></select></td>
-                <td><select class="assign-select"><option>claude</option><option selected>deepseek</option><option>gemini</option><option>kimi</option></select></td>
+                <td><select class="assign-select"><option>incident-monitor</option><option selected>issue-monitor</option><option>codebase-monitor</option><option>instrumentation-campaign</option><option>behavior-monitor</option></select></td>
+                <td><select class="assign-select"><option>claude</option><option selected>deepseek</option><option>gemini</option><option>kimi</option><option>openai</option></select></td>
               </tr>
               <tr>
                 <td>agent-3</td>
-                <td><select class="assign-select"><option>incident-monitor</option><option>issue-monitor</option><option selected>codebase-monitor</option></select></td>
-                <td><select class="assign-select"><option selected>claude</option><option>deepseek</option><option>gemini</option><option>kimi</option></select></td>
+                <td><select class="assign-select"><option>incident-monitor</option><option>issue-monitor</option><option selected>codebase-monitor</option><option>instrumentation-campaign</option><option>behavior-monitor</option></select></td>
+                <td><select class="assign-select"><option selected>claude</option><option>deepseek</option><option>gemini</option><option>kimi</option><option>openai</option></select></td>
+              </tr>
+              <tr>
+                <td>agent-4</td>
+                <td><select class="assign-select"><option>incident-monitor</option><option>issue-monitor</option><option>codebase-monitor</option><option>instrumentation-campaign</option><option selected>behavior-monitor</option></select></td>
+                <td><select class="assign-select"><option>claude</option><option>deepseek</option><option>gemini</option><option>kimi</option><option selected>openai</option></select></td>
               </tr>
             </tbody>
           </table>
@@ -2521,7 +2698,7 @@
 
             <div class="card-footer" style="margin-top: 16px;">
               <span>Database: <strong>SQLite (<code>auth.db</code>)</strong></span>
-              <span>Hashing: <strong>SHA-256 + Salt</strong></span>
+              <span>Hashing: <strong>argon2id</strong></span>
             </div>
           </div>
 
@@ -2606,8 +2783,8 @@
           </div>
           <div class="card" style="padding: 12px 16px;">
             <div class="card-stat-label">SECURITY ENGINE</div>
-            <div class="card-stat" style="font-size: 15px; font-family: monospace; color: var(--text-white);">SHA-256</div>
-            <div class="card-subtitle" style="margin: 0;">16-byte cryptographic salt</div>
+            <div class="card-stat" style="font-size: 15px; font-family: monospace; color: var(--text-white);">argon2id</div>
+            <div class="card-subtitle" style="margin: 0;">legacy SHA-256 upgraded on login</div>
           </div>
         </div>
 
@@ -2677,7 +2854,7 @@
               <span class="badge-pill">SQLite Insert</span>
             </div>
             <div class="card-subtitle">
-              Create a new authenticated operator account. The password will be salted and hashed with SHA-256.
+              Create a new authenticated operator account. The password will be hashed with argon2id.
             </div>
 
             <!-- Create user success feedback -->

@@ -196,7 +196,7 @@ A comprehensive breakdown of all UI views, dashboards, and control surfaces in t
   - **Developer Accounts (`developer`)**: The Users Registry sidebar menu item is hidden, and direct route access is strictly blocked.
 - **UI Components**:
   - **Admin Security Banner**: Highlights elevated administrative privilege status.
-  - **Operator Metric Cards**: Live metrics for Total Users, Active Administrators, Pipeline Developers, and Cryptographic Hash Engine (SHA-256 + 16-byte salt).
+  - **Operator Metric Cards**: Live metrics for Total Users, Active Administrators, Pipeline Developers, and Cryptographic Hash Engine (argon2id via `Bun.password`; legacy salted SHA-256 rows from the seed SQL are rehashed on first successful login).
   - **Operator Registry Table**: Searchable table displaying User ID (`usr_...`), Username, Role pill (`admin` / `developer`), Full Name, Email, Status, and action triggers.
   - **Add New Operator Form**: Interactive form to provision new operators with username, temporary password, role selection, full name, and email.
   - **Active Sessions Ledger**: Live table of active session tokens (`sessions` table) with creation timestamp, 24-hour expiration countdown, security flags (`HttpOnly; SameSite=Lax`), and instant session revocation.

@@ -1,20 +1,21 @@
 import type { ConfigView } from '../use-cases/get-config-view.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 function row(label: string, desc: string, value: string): string {
-  return `<div class="settings-row"><div><div class="settings-label">${label}</div><div class="settings-desc">${desc}</div></div><input class="settings-input" value="${value}" disabled></div>`;
+  return `<div class="settings-row"><div><div class="settings-label">${label}</div><div class="settings-desc">${desc}</div></div><input class="settings-input" value="${escapeHtml(value)}" disabled></div>`;
 }
 
 export function renderConfigPage(view: ConfigView): string {
   const providerRows = view.providerKeys
-    .map(p => `<div class="gateway-row"><span>${p.provider}</span><span class="badge-pill ${p.set ? 'badge-green' : ''}">${p.set ? 'set' : 'not set'}</span></div>`)
+    .map(p => `<div class="gateway-row"><span>${escapeHtml(p.provider)}</span><span class="badge-pill ${p.set ? 'badge-green' : ''}">${p.set ? 'set' : 'not set'}</span></div>`)
     .join('\n');
 
   const gatewayRows = view.gateways
-    .map(g => `<div class="gateway-row"><span>${g.name}</span><span class="badge-pill ${g.connected ? 'badge-green' : ''}">${g.connected ? 'connected' : 'not configured'}</span></div>`)
+    .map(g => `<div class="gateway-row"><span>${escapeHtml(g.name)}</span><span class="badge-pill ${g.connected ? 'badge-green' : ''}">${g.connected ? 'connected' : 'not configured'}</span></div>`)
     .join('\n');
 
   const fleetRows = view.fleetAgents
-    .map(a => `<tr><td>${a.name}</td><td>${a.job}</td><td>${a.provider}</td></tr>`)
+    .map(a => `<tr><td>${escapeHtml(a.name)}</td><td>${escapeHtml(a.job)}</td><td>${escapeHtml(a.provider)}</td></tr>`)
     .join('\n');
 
   return `
