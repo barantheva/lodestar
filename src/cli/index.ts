@@ -445,12 +445,14 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
         mkdirSync(config.dataDir, { recursive: true });
 
         const authService = new AuthService(openAuthDb(nodePath.join(config.dataDir, 'auth.db')));
-        if (config.dashboardAdminPassword) {
-          authService.setPassword('admin', config.dashboardAdminPassword);
-        }
+        if (config.dashboardAdminPassword) authService.setPassword('admin', config.dashboardAdminPassword);
+        if (config.dashboardDeveloperPassword) authService.setPassword('developer', config.dashboardDeveloperPassword);
+
+        // Known seed credentials must never be reachable from the network.
         const defaults = authService.accountsWithDefaultPasswords();
-        if (defaults.length > 0) {
-          console.warn(`[Dashboard] WARNING: account(s) ${defaults.join(', ')} still use their default password (username = password). Set DASHBOARD_ADMIN_PASSWORD or change them before exposing this port.`);
+        const hostname = defaults.length > 0 ? '127.0.0.1' : undefined;
+        if (hostname) {
+          console.warn(`[Dashboard] Account(s) ${defaults.join(', ')} still use their default password, so the dashboard binds to 127.0.0.1 only. Set DASHBOARD_ADMIN_PASSWORD / DASHBOARD_DEVELOPER_PASSWORD to serve on all interfaces.`);
         }
 
         const server = createDashboardServer({
@@ -461,9 +463,10 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
           authService,
           config,
           baseDir: process.cwd(),
+          hostname,
         });
 
-        console.log(`[Dashboard] Listening on http://localhost:${server.port}`);
+        console.log(`[Dashboard] Listening on http://${server.hostname}:${server.port}`);
         return await new Promise<number>(() => {});
       } catch (err: any) {
         console.error(`[Dashboard] Startup error: ${err.message}`);

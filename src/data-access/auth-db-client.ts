@@ -135,6 +135,10 @@ export class AuthDb {
     this.db.prepare(`DELETE FROM sessions WHERE token = $token`).run({ $token: token });
   }
 
+  deleteSessionsForUser(userId: string): void {
+    this.db.prepare(`DELETE FROM sessions WHERE user_id = $userId`).run({ $userId: userId });
+  }
+
   deleteExpiredSessions(now: number = Date.now()): void {
     this.db.prepare(`DELETE FROM sessions WHERE expires_at <= $now`).run({ $now: now });
   }

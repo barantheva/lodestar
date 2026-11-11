@@ -81,6 +81,16 @@ describe('AuthService', () => {
     expect(() => authService.setPassword('ghost', 'x')).toThrow();
   });
 
+  it('revokes all of a user\'s sessions when their password changes', () => {
+    const authService = new AuthService(openAuthDb(':memory:'));
+    const admin = authService.authenticate('admin', 'admin')!;
+    const dev = authService.authenticate('developer', 'developer')!;
+
+    authService.setPassword('admin', 'rotated');
+    expect(authService.validateSession(admin.sessionToken)).toBeNull();
+    expect(authService.validateSession(dev.sessionToken)?.username).toBe('developer');
+  });
+
   it('lists active sessions joined with the owning username, and revokes by token', () => {
     const authDb = openAuthDb(':memory:');
     const authService = new AuthService(authDb);
