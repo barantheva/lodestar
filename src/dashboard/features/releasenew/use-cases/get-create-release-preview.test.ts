@@ -55,5 +55,15 @@ describe('getCreateReleasePreview', () => {
     expect(preview.sinceLastTag).toHaveLength(1);
     expect(preview.sinceLastTag[0].trackId).toBe('t1');
     expect(preview.lastTag?.tag).toBe('old-tag');
+    expect(preview.changelogDraft).toContain('Fixed thing');
+  });
+
+  it('drafts an honest "no tracks" changelog when nothing has shipped since the last tag', async () => {
+    const registry = new ServiceRegistry();
+    registry.registerTool(fakeGitTool('a1b2c3d', []));
+
+    const preview = await getCreateReleasePreview({ registry, baseDir: testBaseDir });
+
+    expect(preview.changelogDraft).toBe('No shipped tracks since the last tag.');
   });
 });

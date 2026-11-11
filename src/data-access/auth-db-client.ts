@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import * as nodePath from 'node:path';
@@ -25,15 +25,21 @@ export interface SessionRecord {
   created_at: number;
 }
 
-export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
-  const finalSalt = salt || randomBytes(16).toString('hex');
-  const hash = createHash('sha256').update(password + finalSalt).digest('hex');
-  return { hash, salt: finalSalt };
+// argon2id PHC string embeds its own salt, so the salt column stays '' for new hashes.
+export function hashPassword(password: string): { hash: string; salt: string } {
+  return { hash: Bun.password.hashSync(password, 'argon2id'), salt: '' };
 }
 
+export function isLegacyHash(hash: string): boolean {
+  return !hash.startsWith('$argon2');
+}
+
+// Legacy rows (seed SQL, pre-argon2 users) are salted SHA-256; AuthService rehashes them on next login.
 export function verifyPassword(password: string, hash: string, salt: string): boolean {
-  const computed = createHash('sha256').update(password + salt).digest('hex');
-  return computed === hash;
+  if (!isLegacyHash(hash)) return Bun.password.verifySync(password, hash);
+  const computed = createHash('sha256').update(password + salt).digest();
+  const stored = Buffer.from(hash, 'hex');
+  return stored.length === computed.length && timingSafeEqual(stored, computed);
 }
 
 export class AuthDb {
@@ -90,6 +96,12 @@ export class AuthDb {
     const stmt = this.db.prepare(`SELECT * FROM users WHERE id = $id`);
     const row = stmt.get({ $id: id }) as UserRecord | null;
     return row || null;
+  }
+
+  updatePassword(id: string, passwordHash: string, salt: string): void {
+    this.db
+      .prepare(`UPDATE users SET password_hash = $hash, salt = $salt, updated_at = $now WHERE id = $id`)
+      .run({ $hash: passwordHash, $salt: salt, $now: Date.now(), $id: id });
   }
 
   listUsers(): UserRecord[] {

@@ -2,7 +2,7 @@
 
 > Autonomous, spec-driven, multi-repo software factory for vibecoders — one person or a small team. Monitors incidents, fixes GitHub issues, watches codebases for regressions, and ships evidence-certified PRs through Relay's Guard 1/2/3 methodology.
 
-**Status: design + a static dashboard mock, zero implementation.** Every `.ts` file path below is a *plan*, not existing code — this README documents the target architecture so implementation follows one consistent structure from the first commit, per `impl.md`. If you're looking for what already exists, that's `mock-ui.html` (dashboard mock) plus the design docs listed in [Documentation Map](#documentation-map).
+**Status: implemented.** 16 dashboard screens, the full Relay Guard 1/2/3 pipeline, 5 model adapters (Claude/Gemini/Kimi/DeepSeek/OpenAI), the fleet supervisor, both knowledge backends, and the Clarity `behavior-monitor` worker (Phase 7 — awaiting one live Clarity run, see `impl.md` §3) are built and covered by 286 passing tests (`bun test`). Open items are tracked in [`docs/progress.md`](docs/progress.md). Every `.ts` file path below is a real file, not a plan — this README documents the actual structure, kept in sync with `impl.md`'s phase checklist as work continues.
 
 ---
 
@@ -36,7 +36,9 @@ Don't duplicate content already written elsewhere — this README is the on-ramp
 | `plan.md` | Product vision, tech stack decisions, phased roadmap, Definition of Success, Cycle Time/Evidence/Rollback metrics formulas (§7). |
 | `impl.md` | **File-level build plan**: module map, layered directory refinement (§1a), data contracts, 6+ implementation phases with done-when checks, known open gaps. |
 | `deployment.md` | VM sizing, cloud-init, systemd unit, Docker, SigNoz/measure-sh setup. |
-| `screen-list.md` | All 13 dashboard screens' UI components and data-access notes. |
+| `progress.md` | **Living status ledger**: verified findings, what's fixed, what's still open, and the next tasks in priority order. |
+| `herdr.md` | Evaluation of herdr (Rust PTY/agent workspace runtime) as an optional execution backend; recommendation: keep the native engine. |
+| `screen-list.md` | All 16 dashboard screens' UI components and data-access notes. |
 | `mock-ui.html` | The dashboard's executable visual spec — build `src/dashboard/` to match this 1:1. |
 | `.env.example` | Every environment variable, with inline comments. |
 | `skills/lodestar/SKILL.md` | The CLI commands this project ships as an installable Agent Skill. |
@@ -130,7 +132,7 @@ Non-dashboard modules (`services/`, `adapters/`, `plugins/`, `core/`) implement 
 1. Install Bun (`curl -fsSL https://bun.sh/install | bash`).
 2. `cp .env.example .env` and fill in at minimum: `GITHUB_TOKEN`, `GITHUB_REPO`, and the API key for whichever `PRIMARY_AUTO_CODER` you set.
 3. `skill install lodestar` to make the CLI commands available to Claude Code/Gemini/other harnesses (`skills/lodestar/SKILL.md`).
-4. Once `src/` exists (`impl.md` Phase 0 onward): `bun install`, then `bun run src/cli/index.ts status` to sanity-check config loads.
+4. `bun install`, then `bun run src/cli/index.ts status` to sanity-check config loads.
 
 ## Environment Configuration
 
@@ -148,7 +150,7 @@ Full reference: `.env.example` (every var has an inline comment). Grouped:
 
 ## Scripts
 
-No `package.json` exists yet (`impl.md` Phase 0 creates it). Planned CLI subcommands (`skills/lodestar/SKILL.md`), invoked as `bun run src/cli/index.ts <subcommand>`:
+CLI subcommands (`skills/lodestar/SKILL.md`), invoked as `bun run src/cli/index.ts <subcommand>`:
 
 | Command | Purpose |
 | :--- | :--- |
@@ -175,7 +177,7 @@ persist_knowledge(collection, doc) / retrieve_knowledge(collection, query?)
 persist_decision(trackId, quote, tags)
 persist_guard_document(trackId, kind, content) / retrieve_guard_document(trackId, kind?)
 ```
-Full contract + the two backend implementations: `impl.md` §2.2. External API calls (GitHub issues/PRs/tags, Sentry/CloudWatch/SigNoz webhooks, Slack/Discord/WhatsApp/Email) live behind `data-access/github-client.ts` and `plugins/tools/`/`services/log-service/`/`services/monitor-service/` respectively — `core/event-bus.ts` is what carries state changes between all of them (full event catalog: `impl.md` §2.3).
+Full contract + the two backend implementations: `impl.md` §2.2. External API calls live in `plugins/tools/` (GitHub issues/PRs, git tags) and `data-access/` (Clarity Data Export, MCP); the planned `data-access/github-client.ts`, `services/log-service/` (Sentry/CloudWatch/SigNoz webhooks) and Slack/Discord/WhatsApp/Email dispatch are not built yet (`docs/progress.md`) — `core/event-bus.ts` is what carries state changes between all of them (full event catalog: `impl.md` §2.3).
 
 ## State Management
 

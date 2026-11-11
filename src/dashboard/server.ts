@@ -1,4 +1,5 @@
 import { renderLayout, NAV_ITEMS } from '../shared/ui/layout.ts';
+import { escapeHtml } from '../shared/utils/escape-html.ts';
 import type { DashboardDeps } from './dashboard-deps.ts';
 import { getOrgStats } from './features/stats/use-cases/get-org-stats.ts';
 import { renderStatsPage } from './features/stats/ui/stats-page.ts';
@@ -146,18 +147,20 @@ export function createDashboardServer(deps: DashboardDeps) {
 
       if (url.pathname === '/release-new') {
         if (req.method === 'POST') {
-          const formData = await req.formData();
-          const tag = (formData.get('tag') as string) || '';
-          const changelogFilename = (formData.get('changelogFilename') as string) || '';
-          const changelogContent = (formData.get('changelogContent') as string) || '';
+          // Tag/filename/changelog are recomputed here, never trusted from the client — the
+          // GET preview's hidden fields could otherwise be edited into a shell-injection or
+          // path-traversal payload via devtools before submit.
+          const preview = await getCreateReleasePreview({ registry: deps.registry, baseDir: deps.baseDir });
 
-          const result = await createRelease({ registry: deps.registry, baseDir: deps.baseDir }, { tag, changelogFilename, changelogContent });
+          const result = await createRelease(
+            { registry: deps.registry, baseDir: deps.baseDir },
+            { tag: preview.tag, changelogFilename: preview.changelogFilename, changelogContent: preview.changelogDraft }
+          );
           if (!result.success) {
-            const preview = await getCreateReleasePreview({ registry: deps.registry, baseDir: deps.baseDir });
             const html = renderLayout({
               activeScreen: 'releasenew',
               title: 'Create Release',
-              bodyHtml: `<div class="card"><div class="empty-state">Release failed: ${result.error}</div></div>${renderCreateReleasePage(preview)}`,
+              bodyHtml: `<div class="card"><div class="empty-state">Release failed: ${escapeHtml(result.error || 'unknown error')}</div></div>${renderCreateReleasePage(preview)}`,
               user,
             });
             return new Response(html, { status: 500, headers: { 'content-type': 'text/html' } });

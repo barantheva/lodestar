@@ -180,5 +180,44 @@ describe('Config Loader', () => {
     expect(cfg.openaiApiKey).toBe('sk-test');
     expect(cfg.knowledgeBackend).toBe('obsidian');
     expect(cfg.loadstoneNexusMcpMode).toBe('remote');
+    expect(cfg.clarityMinRageClicks).toBe(20);
+    expect(cfg.clarityMinDeadClicks).toBe(30);
+    expect(cfg.clarityMinJsExceptions).toBe(15);
+    expect(cfg.clarityMinQuickBacks).toBe(30);
+    expect(cfg.clarityMinExcessiveScroll).toBe(30);
+    expect(cfg.clarityMinFrustrationScore).toBe(0.65);
+    expect(cfg.clarityLookbackHours).toBe(24);
+    expect(cfg.clarityBatchIntervalHours).toBe(4);
+  });
+
+  it('reads the documented DASHBOARD_PORT, with PORT taking precedence', () => {
+    expect(loadConfig({ GITHUB_TOKEN: 'x', PORT: undefined, DASHBOARD_PORT: '4100' }).port).toBe(4100);
+    expect(loadConfig({ GITHUB_TOKEN: 'x', PORT: '4200', DASHBOARD_PORT: '4100' }).port).toBe(4200);
+  });
+
+  it('parses custom Clarity Data Export configuration', () => {
+    const cfg = loadConfig({
+      GITHUB_TOKEN: 'ghp_valid_secret',
+      PRIMARY_AUTO_CODER: 'claude',
+      CLARITY_API_TOKEN: 'clarity_tok_123',
+      CLARITY_MIN_RAGE_CLICKS: '50',
+      CLARITY_MIN_DEAD_CLICKS: '40',
+      CLARITY_MIN_JS_EXCEPTIONS: '10',
+      CLARITY_MIN_QUICK_BACKS: '12',
+      CLARITY_MIN_EXCESSIVE_SCROLL: '0',
+      CLARITY_MIN_FRUSTRATION_SCORE: '0.8',
+      CLARITY_LOOKBACK_HOURS: '48',
+      CLARITY_BATCH_INTERVAL_HOURS: '6',
+    });
+
+    expect(cfg.clarityApiToken).toBe('clarity_tok_123');
+    expect(cfg.clarityMinQuickBacks).toBe(12);
+    expect(cfg.clarityMinExcessiveScroll).toBe(0);
+    expect(cfg.clarityMinFrustrationScore).toBe(0.8);
+    expect(cfg.clarityMinRageClicks).toBe(50);
+    expect(cfg.clarityMinDeadClicks).toBe(40);
+    expect(cfg.clarityMinJsExceptions).toBe(10);
+    expect(cfg.clarityLookbackHours).toBe(48);
+    expect(cfg.clarityBatchIntervalHours).toBe(6);
   });
 });

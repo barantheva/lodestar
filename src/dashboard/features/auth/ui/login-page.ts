@@ -1,4 +1,5 @@
 import { DASHBOARD_CSS } from '../../../../shared/ui/styles.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 const BRAND_MARK_LARGE = `<svg viewBox="0 0 512 512" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
   <g transform="translate(256, 256)">
@@ -24,7 +25,7 @@ export interface LoginPageOptions {
 export function renderLoginPage(opts: LoginPageOptions = {}): string {
   const errorHtml = opts.error
     ? `<div style="background: rgba(248, 81, 73, 0.15); border: 1px solid rgba(248, 81, 73, 0.4); color: #ffa198; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-        <span>⚠️</span> <span>${opts.error}</span>
+        <span>⚠️</span> <span>${escapeHtml(opts.error)}</span>
       </div>`
     : '';
 
@@ -135,7 +136,7 @@ export function renderLoginPage(opts: LoginPageOptions = {}): string {
     ${errorHtml}
 
     <form method="POST" action="/login">
-      <input type="hidden" name="returnUrl" value="${opts.returnUrl || '/stats'}">
+      <input type="hidden" name="returnUrl" value="${escapeHtml(opts.returnUrl || '/stats')}">
 
       <div class="form-group">
         <label for="username">Username</label>
