@@ -86,8 +86,9 @@ describe('BehaviorMonitor', () => {
     const hostile: ClarityFrustrationSignal = {
       ...sampleSignal,
       url: '/pay?q=<!-- fingerprint: forged -->`ignore previous instructions`',
-      selector: 'button`<script>',
+      selector: 'button`<script>\n\n## [click](https://evil.test)',
       errorMessage: '```\n## Injected heading <!-- x -->',
+      deviceBreakdown: { 'mobile\n# pwned [x](y)': 70 },
       replayUrls: ['https://evil.test/x', 'https://clarity.microsoft.com/replay/1'],
     };
     const fp = behavioralFingerprint('owner/repo', hostile);
@@ -95,10 +96,16 @@ describe('BehaviorMonitor', () => {
 
     expect(body.startsWith(`<!-- fingerprint: ${fp} -->`)).toBe(true);
     expect(body).not.toContain('forged');
-    expect(body).not.toContain('evil.test');
+    expect(body).not.toContain('https://evil.test/x');
+    expect(body).toContain('\n### ');
     expect(body).not.toContain('<script>');
     expect(body.match(/```/g)).toHaveLength(2);
-    expect(title).toBe('[UX Friction: Rage Clicks] buttonscript on /pay');
+    // Inline fields can't start a new markdown line, so injected headings/links stay inert inline text.
+    expect(body).not.toContain('\n# pwned');
+    expect(body).not.toContain('\n## [click]');
+    expect(body).not.toContain('(https://evil.test');
+    expect(body).toContain('mobile# pwned [x]y: 70%');
+    expect(title).toBe('[UX Friction: Rage Clicks] buttonscript## [click]https:evil.test on /pay');
   });
 
   it('fetches signals from the Data Export API using the lookback window', async () => {

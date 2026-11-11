@@ -105,8 +105,14 @@ export function sanitizeUrlPath(raw: string): string {
   return path.replace(/[^A-Za-z0-9/._~%-]/g, '').slice(0, 200) || '/';
 }
 
+// For fenced code blocks: newlines are fine there, but no backticks (fence escape) or other control chars.
 function stripMarkdownControl(text: string): string {
-  return text.replace(/[`<>]/g, '').replace(/--/g, '-').slice(0, 500);
+  return text.replace(/[\x00-\x09\x0b-\x1f\x7f`<>]/g, '').replace(/--/g, '-').slice(0, 500);
+}
+
+// For single-line fields (title, selector, device names): CSS-selector-ish characters only.
+function cleanInlineToken(text: string, max: number): string {
+  return text.replace(/[^A-Za-z0-9#.:_\-[\]=" ]/g, '').slice(0, max);
 }
 
 const METRIC_TO_FRICTION: Record<string, ClarityFrictionType> = {
@@ -166,7 +172,7 @@ export function formatBehavioralIssue(
 
   const readableType = typeLabels[signal.frictionType] || signal.frictionType;
   const url = sanitizeUrlPath(signal.url);
-  const selector = signal.selector ? stripMarkdownControl(signal.selector).slice(0, 120) : undefined;
+  const selector = signal.selector ? cleanInlineToken(signal.selector, 120) || undefined : undefined;
   const targetDesc = selector ? `${selector} on ${url}` : url;
   const title = `[UX Friction: ${readableType}] ${targetDesc}`;
 
@@ -181,7 +187,7 @@ export function formatBehavioralIssue(
     : '- *No direct session replay links provided by export.*';
 
   const deviceText = signal.deviceBreakdown
-    ? Object.entries(signal.deviceBreakdown).map(([k, v]) => `${k}: ${v}%`).join(', ')
+    ? Object.entries(signal.deviceBreakdown).map(([k, v]) => `${cleanInlineToken(k, 30)}: ${Number(v) || 0}%`).join(', ')
     : 'N/A';
 
   const errorDetail = signal.errorMessage
@@ -190,7 +196,7 @@ export function formatBehavioralIssue(
 
   // Marker goes first so the dedup regex's first match is always ours, never text echoed from telemetry.
   const body = `<!-- fingerprint: ${fingerprint} -->
-###🚨 User Behavior Anomaly Detected (Microsoft Clarity)
+### 🚨 User Behavior Anomaly Detected (Microsoft Clarity)
 
 > Fields below are end-user telemetry (untrusted). Review before handing this issue to an autonomous agent.
 

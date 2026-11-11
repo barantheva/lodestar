@@ -32,6 +32,20 @@ function createTestDeps() {
 }
 
 describe('Dashboard Server Authentication', () => {
+  it('rejects non-loopback Host headers when bound to loopback (DNS rebinding)', async () => {
+    const server = createDashboardServer({ ...createTestDeps(), hostname: '127.0.0.1' });
+    try {
+      const rebound = await server.fetch(new Request(`http://attacker.test:${server.port}/login`));
+      expect(rebound.status).toBe(421);
+      const local = await fetch(`http://127.0.0.1:${server.port}/login`);
+      expect(local.status).toBe(200);
+      const named = await server.fetch(new Request(`http://localhost:${server.port}/login`));
+      expect(named.status).toBe(200);
+    } finally {
+      server.stop(true);
+    }
+  });
+
   it('serves GET /login with login form', async () => {
     const deps = createTestDeps();
     const server = createDashboardServer(deps);
