@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Tool, ToolParameters, ToolResult } from '../../core/interfaces/tool-interface.ts';
 import { CodeExecTool } from './code-exec-tool.ts';
+import { shellQuote } from '../../shared/utils/shell-quote.ts';
 
 export interface GitToolArgs {
   action: 'create_worktree' | 'cleanup_worktree' | 'commit' | 'diff' | 'release_tag' | 'list_tags' | 'revert' | 'head_sha';
@@ -55,7 +56,11 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
     required: ['action'],
   };
 
-  private exec = new CodeExecTool();
+  private exec: CodeExecTool;
+
+  constructor(exec: CodeExecTool = new CodeExecTool()) {
+    this.exec = exec;
+  }
 
   public async execute(
     args: GitToolArgs,
@@ -76,7 +81,7 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
             mkdirSync(resolve(baseRepoPath, '.worktrees'), { recursive: true });
           }
 
-          const cmd = `git worktree add -B "${branch}" "${worktreeDir}" "${baseBranch}"`;
+          const cmd = `git worktree add -B ${shellQuote(branch)} ${shellQuote(worktreeDir)} ${shellQuote(baseBranch)}`;
           const res = await this.exec.execute({ command: cmd, cwd: baseRepoPath });
 
           if (!res.success) {
@@ -97,7 +102,7 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
           const worktreeDir = resolve(baseRepoPath, '.worktrees', args.trackId);
 
           if (existsSync(worktreeDir)) {
-            await this.exec.execute({ command: `git worktree remove --force "${worktreeDir}"`, cwd: baseRepoPath });
+            await this.exec.execute({ command: `git worktree remove --force ${shellQuote(worktreeDir)}`, cwd: baseRepoPath });
             if (existsSync(worktreeDir)) {
               rmSync(worktreeDir, { recursive: true, force: true });
             }
@@ -116,7 +121,7 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
 
           await this.exec.execute({ command: 'git add -A', cwd });
           const commitRes = await this.exec.execute({
-            command: `git commit -m "${message.replace(/"/g, '\\"')}"`,
+            command: `git commit -m ${shellQuote(message)}`,
             cwd,
           });
 
@@ -136,7 +141,7 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
         case 'diff': {
           const cwd = context?.worktreePath || args.repoPath || process.cwd();
           const baseBranch = args.baseBranch || 'HEAD';
-          const diffRes = await this.exec.execute({ command: `git diff "${baseBranch}"`, cwd });
+          const diffRes = await this.exec.execute({ command: `git diff ${shellQuote(baseBranch)}`, cwd });
 
           return {
             success: true,
@@ -152,12 +157,12 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
           const tag = args.tag || this.formatDefaultReleaseTag(shortSha);
 
           if (args.changelogPath && existsSync(resolve(cwd, args.changelogPath))) {
-            await this.exec.execute({ command: `git add "${args.changelogPath}"`, cwd });
-            await this.exec.execute({ command: `git commit -m "chore(release): ${tag} changelog"`, cwd });
+            await this.exec.execute({ command: `git add ${shellQuote(args.changelogPath)}`, cwd });
+            await this.exec.execute({ command: `git commit -m ${shellQuote(`chore(release): ${tag} changelog`)}`, cwd });
           }
 
           const tagRes = await this.exec.execute({
-            command: `git tag -a "${tag}" -m "Release ${tag}"`,
+            command: `git tag -a ${shellQuote(tag)} -m ${shellQuote(`Release ${tag}`)}`,
             cwd,
           });
 
@@ -191,7 +196,7 @@ export class GitTool implements Tool<GitToolArgs, GitToolResult> {
           }
           const cwd = context?.worktreePath || args.repoPath || process.cwd();
           const revertRes = await this.exec.execute({
-            command: `git revert -m 1 "${args.commitHash}" --no-edit`,
+            command: `git revert -m 1 ${shellQuote(args.commitHash)} --no-edit`,
             cwd,
           });
 

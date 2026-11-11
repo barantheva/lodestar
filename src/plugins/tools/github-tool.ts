@@ -1,10 +1,11 @@
 import type { Tool, ToolParameters, ToolResult } from '../../core/interfaces/tool-interface.ts';
 
 export interface GithubToolArgs {
-  action: 'list_issues' | 'get_issue' | 'create_pr' | 'create_comment';
+  action: 'list_issues' | 'get_issue' | 'create_pr' | 'create_comment' | 'create_issue';
   repo: string; // "owner/name"
   token?: string;
   labels?: string[];
+  state?: 'open' | 'closed' | 'all';
   issueNumber?: number;
   title?: string;
   body?: string;
@@ -40,12 +41,13 @@ export class GithubTool implements Tool<GithubToolArgs, unknown> {
     properties: {
       action: {
         type: 'string',
-        enum: ['list_issues', 'get_issue', 'create_pr', 'create_comment'],
+        enum: ['list_issues', 'get_issue', 'create_pr', 'create_comment', 'create_issue'],
         description: 'GitHub operation to execute',
       },
       repo: { type: 'string', description: 'Repository identifier in owner/repo format' },
       token: { type: 'string', description: 'GitHub personal access token or app token' },
       labels: { type: 'string', description: 'Labels filter for issues' },
+      state: { type: 'string', description: 'Issue state filter for list_issues: open (default), closed, or all' },
       issueNumber: { type: 'number', description: 'Issue or PR number' },
       title: { type: 'string', description: 'PR or Issue title' },
       body: { type: 'string', description: 'Markdown body content' },
@@ -87,20 +89,27 @@ export class GithubTool implements Tool<GithubToolArgs, unknown> {
     try {
       switch (args.action) {
         case 'list_issues': {
-          const params = new URLSearchParams({ state: 'open' });
+          const params = new URLSearchParams({ state: args.state ?? 'open', per_page: '100' });
           if (args.labels && args.labels.length > 0) {
             params.set('labels', args.labels.join(','));
           }
 
-          const url = `${baseUrl}/repos/${args.repo}/issues?${params.toString()}`;
-          const res = await this.customFetch(url, { headers });
+          const rawIssues: any[] = [];
+          // ponytail: 10-page cap (1,000 issues) bounds API calls per poll; switch to search API or `since` if a repo outgrows it.
+          for (let page = 1; page <= 10; page++) {
+            params.set('page', String(page));
+            const res = await this.customFetch(`${baseUrl}/repos/${args.repo}/issues?${params.toString()}`, { headers });
 
-          if (!res.ok) {
-            const errText = await res.text();
-            return { success: false, error: `GitHub API error ${res.status}: ${errText}` };
+            if (!res.ok) {
+              const errText = await res.text();
+              return { success: false, error: `GitHub API error ${res.status}: ${errText}` };
+            }
+
+            const batch = (await res.json()) as any[];
+            rawIssues.push(...batch);
+            if (batch.length < 100) break;
           }
 
-          const rawIssues = (await res.json()) as any[];
           const issues: GithubIssue[] = rawIssues
             .filter(i => !i.pull_request) // Filter out PRs returned by the issues endpoint
             .map(i => ({
@@ -198,6 +207,43 @@ export class GithubTool implements Tool<GithubToolArgs, unknown> {
 
           const raw = (await res.json()) as any;
           return { success: true, data: { id: raw.id, htmlUrl: raw.html_url } };
+        }
+
+        case 'create_issue': {
+          if (!args.title) {
+            return { success: false, error: 'Missing title for create_issue action' };
+          }
+
+          const url = `${baseUrl}/repos/${args.repo}/issues`;
+          const payload = {
+            title: args.title,
+            body: args.body || '',
+            labels: args.labels || [],
+          };
+
+          const res = await this.customFetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            return { success: false, error: `Failed to create issue (${res.status}): ${errText}` };
+          }
+
+          const raw = (await res.json()) as any;
+          const issue: GithubIssue = {
+            number: raw.number,
+            title: raw.title,
+            body: raw.body || '',
+            labels: (raw.labels || []).map((l: any) => (typeof l === 'string' ? l : l.name)),
+            author: raw.user?.login || 'unknown',
+            htmlUrl: raw.html_url,
+            createdAt: raw.created_at,
+          };
+
+          return { success: true, data: issue };
         }
 
         default:

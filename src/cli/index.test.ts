@@ -369,5 +369,20 @@ describe('CLI Controller', () => {
       else delete process.env.AGENT_COUNT;
     }
   });
+
+  it('includes behavior-monitor in help text', async () => {
+    let output = '';
+    const origLog = console.log;
+    console.log = (msg: string) => {
+      output += msg + '\n';
+    };
+    try {
+      const code = await main(['--help']);
+      expect(code).toBe(0);
+      expect(output).toContain('behavior-monitor');
+    } finally {
+      console.log = origLog;
+    }
+  });
 });
 

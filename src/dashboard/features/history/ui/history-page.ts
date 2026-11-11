@@ -1,13 +1,14 @@
 import type { RunHistoryData } from '../use-cases/get-run-history.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 export function renderHistoryPage(data: RunHistoryData): string {
   const rows = data.shippedTracks
     .map(
       t => `<tr>
-        <td>${t.trackId}</td>
-        <td>${t.issueTitle || '—'}</td>
+        <td>${escapeHtml(t.trackId)}</td>
+        <td>${t.issueTitle ? escapeHtml(t.issueTitle) : '—'}</td>
         <td>${t.archetype || '—'}</td>
-        <td>${t.guard3SignedBy || '—'}</td>
+        <td>${t.guard3SignedBy ? escapeHtml(t.guard3SignedBy) : '—'}</td>
         <td><a href="/memories" class="guard-doc-link">📁 view</a></td>
       </tr>`
     )

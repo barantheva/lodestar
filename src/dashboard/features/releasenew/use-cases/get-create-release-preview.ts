@@ -14,8 +14,17 @@ export interface CreateReleasePreview {
   headShortSha: string;
   tag: string;
   changelogFilename: string;
+  changelogDraft: string;
   lastTag?: TagInfo;
   sinceLastTag: TrackRecord[];
+}
+
+function draftChangelog(sinceLastTag: TrackRecord[]): string {
+  if (sinceLastTag.length === 0) {
+    return 'No shipped tracks since the last tag.';
+  }
+  const lines = sinceLastTag.map(t => `- ${t.issueTitle || t.trackId} (${t.trackId}${t.repo ? `, ${t.repo}` : ''})`);
+  return `## Issues Fixed\n${lines.join('\n')}`;
 }
 
 export async function getCreateReleasePreview(deps: Pick<DashboardDeps, 'registry' | 'baseDir'>): Promise<CreateReleasePreview> {
@@ -42,6 +51,7 @@ export async function getCreateReleasePreview(deps: Pick<DashboardDeps, 'registr
     headShortSha,
     tag,
     changelogFilename: `change-log-${tag}.md`,
+    changelogDraft: draftChangelog(sinceLastTag),
     lastTag,
     sinceLastTag,
   };

@@ -1,6 +1,6 @@
 import { randomUUID, randomBytes } from 'crypto';
 import type { AuthDb, UserRecord } from '../../data-access/auth-db-client.ts';
-import { hashPassword, verifyPassword } from '../../data-access/auth-db-client.ts';
+import { hashPassword, isLegacyHash, verifyPassword } from '../../data-access/auth-db-client.ts';
 
 export interface AuthUser {
   id: string;
@@ -34,6 +34,10 @@ export class AuthService {
 
     if (!verifyPassword(password, user.password_hash, user.salt)) {
       return null;
+    }
+    if (isLegacyHash(user.password_hash)) {
+      const { hash, salt } = hashPassword(password);
+      this.authDb.updatePassword(user.id, hash, salt);
     }
 
     const sessionToken = randomBytes(32).toString('hex');
@@ -97,6 +101,22 @@ export class AuthService {
 
     this.authDb.insertUser(record);
     return this.toAuthUser(record);
+  }
+
+  setPassword(username: string, password: string): void {
+    const user = this.authDb.findUserByUsername(username);
+    if (!user) throw new Error(`No user '${username}'`);
+    const { hash, salt } = hashPassword(password);
+    this.authDb.updatePassword(user.id, hash, salt);
+    this.authDb.deleteSessionsForUser(user.id);
+  }
+
+  // The seed SQL ships admin/admin and developer/developer; flag any account still matching that pattern.
+  accountsWithDefaultPasswords(): string[] {
+    return this.authDb
+      .listUsers()
+      .filter(u => verifyPassword(u.username, u.password_hash, u.salt))
+      .map(u => u.username);
   }
 
   listUsers(): AuthUser[] {

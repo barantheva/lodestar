@@ -14,6 +14,14 @@ import { OpenAiAdapter } from '../adapters/openai-adapter.ts';
 import { FleetDb } from '../services/agent-service/fleet-db.ts';
 import { Supervisor } from '../services/agent-service/supervisor.ts';
 import { runIssueMonitorLoop } from '../plugins/agents/issue-monitor.ts';
+import { runBehaviorMonitorLoop } from '../plugins/agents/behavior-monitor.ts';
+import { openAuthDb } from '../data-access/auth-db-client.ts';
+import { AuthService } from '../services/auth-service/index.ts';
+import { createDashboardServer } from '../dashboard/server.ts';
+import type { KnowledgeBackend } from '../core/interfaces/memory-interface.ts';
+import type { Config } from '../config/index.ts';
+import { mkdirSync } from 'node:fs';
+import * as nodePath from 'node:path';
 import { evaluateRollbackCondition, type PostDeployTelemetry } from '../services/monitor-service/metrics-calculator.ts';
 import { performRollback } from '../services/monitor-service/deploy-runner.ts';
 
@@ -29,7 +37,8 @@ COMMANDS:
   run             Execute an automated track for a specific GitHub issue
   worker          Run one named worker's polling loop for a job type (spawned by daemon)
   daemon          Start the fleet supervisor across all configured repos/agents
-  status          Display daemon status, registered components, and config
+  dashboard       Start the operations dashboard (reads the daemon's Fleet DB + knowledge backend)
+  status         Display daemon status, registered components, and config
   init-knowledge  Index repository AST symbols and cache in knowledge backend
   sentinel-test   Simulate a rate-limit hold event and verify sentinel response
   deploy-test     Simulate a failed post-deploy health check and verify auto-revert + H-track remediation
@@ -37,16 +46,19 @@ COMMANDS:
 OPTIONS:
   --repo <owner/name>     Target GitHub repository (e.g. apache/casbin-gateway)
   --issue <number>        GitHub issue number to fix
-  --job <job-type>        Worker job type (issue-monitor | incident-monitor | codebase-monitor | instrumentation-campaign)
+  --job <job-type>        Worker job type (issue-monitor | incident-monitor | codebase-monitor | instrumentation-campaign | behavior-monitor)
   --provider <model>      Model provider override (claude | gemini | kimi | deepseek | openai)
   --test-cmd <command>    Custom test/build verification command
-  --help, -h              Show this help message
+  --port <number>         Dashboard port (overrides PORT, default 3000)
+  --help, -h             Show this help message
   --version, -v           Show version information
 
 EXAMPLES:
   lodestar run --issue 42 --repo owner/my-app
   lodestar worker --job issue-monitor --repo owner/my-app
+  lodestar worker --job behavior-monitor --repo owner/my-app
   lodestar daemon
+  lodestar dashboard --port 3000
   lodestar status
   lodestar sentinel-test
 `);
@@ -71,6 +83,23 @@ export function registerDefaultPlugins(): void {
   }
 }
 
+async function createKnowledgeBackend(config: Config): Promise<KnowledgeBackend> {
+  if (config.knowledgeBackend === 'obsidian') {
+    const { ObsidianBackend } = await import('../services/memory-service/obsidian-backend.ts');
+    return new ObsidianBackend({
+      vaultPath: config.obsidianVaultPath,
+      apiUrl: config.obsidianVaultPath ? undefined : config.obsidianMcpUrl,
+      apiKey: config.obsidianApiKey,
+    });
+  }
+  const { LoadstoneNexusBackend } = await import('../services/memory-service/loadstonenexus-backend.ts');
+  return new LoadstoneNexusBackend({
+    mode: config.loadstoneNexusMcpMode as 'local' | 'remote',
+    dataDir: config.dataDir,
+    mcpUrl: config.loadstoneNexusMcpUrl,
+  });
+}
+
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   const options = {
     help: { type: 'boolean' as const, short: 'h' },
@@ -81,6 +110,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     provider: { type: 'string' as const },
     'test-cmd': { type: 'string' as const },
     'sign-guard-1': { type: 'boolean' as const },
+    port: { type: 'string' as const },
   };
 
   let parsed: ReturnType<typeof parseArgs<{ options: typeof options; allowPositionals: true }>>;
@@ -133,23 +163,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
         const config = loadConfig();
         const targetRepo = parsed.values.repo || (config.githubRepos.length > 0 ? config.githubRepos[0] : 'local/repo');
         const force = false;
-
-        let backend;
-        if (config.knowledgeBackend === 'obsidian') {
-          const { ObsidianBackend } = await import('../services/memory-service/obsidian-backend.ts');
-          backend = new ObsidianBackend({
-            vaultPath: config.obsidianVaultPath,
-            apiUrl: config.obsidianVaultPath ? undefined : config.obsidianMcpUrl,
-            apiKey: config.obsidianApiKey,
-          });
-        } else {
-          const { LoadstoneNexusBackend } = await import('../services/memory-service/loadstonenexus-backend.ts');
-          backend = new LoadstoneNexusBackend({
-            mode: config.loadstoneNexusMcpMode as 'local' | 'remote',
-            dataDir: config.dataDir,
-            mcpUrl: config.loadstoneNexusMcpUrl,
-          });
-        }
+        const backend = await createKnowledgeBackend(config);
 
         const { GraphMemory } = await import('../plugins/memory/graph-memory.ts');
         const graphMem = new GraphMemory(backend);
@@ -325,6 +339,37 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
         console.log(`[Worker] Starting ${job} worker for ${repo} via provider "${provider}"...`);
 
+        if (job === 'behavior-monitor') {
+          if (!config.clarityApiToken) {
+            console.error('Error: "behavior-monitor" requires CLARITY_API_TOKEN (Clarity → Settings → Data Export)');
+            return 1;
+          }
+          const githubTool = globalRegistry.getTool<any, any>('github') as GithubTool;
+
+          await runBehaviorMonitorLoop(
+            {
+              githubTool,
+              repo,
+              clarityApiToken: config.clarityApiToken,
+              thresholds: {
+                minRageClicks: config.clarityMinRageClicks,
+                minDeadClicks: config.clarityMinDeadClicks,
+                minJsExceptions: config.clarityMinJsExceptions,
+                minQuickBacks: config.clarityMinQuickBacks,
+                minExcessiveScroll: config.clarityMinExcessiveScroll,
+                minFrustrationScore: config.clarityMinFrustrationScore,
+                lookbackHours: config.clarityLookbackHours,
+              },
+              eventBus: globalEventBus,
+            },
+            {
+              intervalMs: (Number(process.env.POLL_INTERVAL_SECONDS) || (config.clarityBatchIntervalHours * 3600)) * 1000,
+              onHeartbeat: sendHeartbeat,
+            }
+          );
+          return 0;
+        }
+
         if (job !== 'issue-monitor') {
           console.log(`[Worker] Job type "${job}" has no autonomous polling logic yet — idling with heartbeat only.`);
           while (true) {
@@ -390,6 +435,41 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
         return await new Promise<number>(() => {});
       } catch (err: any) {
         console.error(`[Daemon] Execution error: ${err.message}`);
+        return 1;
+      }
+    }
+
+    case 'dashboard': {
+      try {
+        const config = loadConfig(parsed.values.port ? { PORT: parsed.values.port } : undefined);
+        mkdirSync(config.dataDir, { recursive: true });
+
+        const authService = new AuthService(openAuthDb(nodePath.join(config.dataDir, 'auth.db')));
+        if (config.dashboardAdminPassword) authService.setPassword('admin', config.dashboardAdminPassword);
+        if (config.dashboardDeveloperPassword) authService.setPassword('developer', config.dashboardDeveloperPassword);
+
+        // Known seed credentials must never be reachable from the network.
+        const defaults = authService.accountsWithDefaultPasswords();
+        const hostname = defaults.length > 0 ? '127.0.0.1' : undefined;
+        if (hostname) {
+          console.warn(`[Dashboard] Account(s) ${defaults.join(', ')} still use their default password, so the dashboard binds to 127.0.0.1 only. Set DASHBOARD_ADMIN_PASSWORD / DASHBOARD_DEVELOPER_PASSWORD to serve on all interfaces.`);
+        }
+
+        const server = createDashboardServer({
+          registry: globalRegistry,
+          eventBus: globalEventBus,
+          fleetDb: new FleetDb(process.env.FLEET_DB_PATH || `${config.dataDir}/fleet.sqlite`),
+          memoryBackend: await createKnowledgeBackend(config),
+          authService,
+          config,
+          baseDir: process.cwd(),
+          hostname,
+        });
+
+        console.log(`[Dashboard] Listening on http://${server.hostname}:${server.port}`);
+        return await new Promise<number>(() => {});
+      } catch (err: any) {
+        console.error(`[Dashboard] Startup error: ${err.message}`);
         return 1;
       }
     }

@@ -3,7 +3,7 @@
 Project rules for any agent (Claude Code or otherwise) working in this repo. Full detail lives in `README.md`/`impl.md`/`architecture.md` — this file is the enforced summary, not a duplicate.
 
 ## Status
-Design + a static dashboard mock (`mock-ui.html`), zero implementation. Read `README.md` first for the map of every doc; don't start writing `src/` code without checking `impl.md` §3 for which phase you're in and its done-when check.
+Implemented: 16 dashboard screens, full Relay Guard 1/2/3 pipeline, 5 model adapters, fleet supervisor, both knowledge backends, Clarity `behavior-monitor` worker (Phase 7, awaiting a live Clarity run) — 286 tests passing (`bun test`). Open items: `docs/progress.md`. Read `README.md` first for the map of every doc; check `impl.md` §3 for which phase a change belongs to and its done-when check before extending `src/`.
 
 ## Non-negotiable architectural rules
 1. **Layered dependency direction**: `features/*/ui` → `features/*/use-cases` → `services/*` → `data-access/*`/`adapters/*`. Never skip a layer, never reverse it. (`impl.md` §1a)

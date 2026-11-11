@@ -1,4 +1,5 @@
 import type { RepoStatsData } from '../use-cases/get-repo-stats.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 export function renderRepoStatsPage(data: RepoStatsData): string {
   if (data.repos.length === 0) {
@@ -6,7 +7,7 @@ export function renderRepoStatsPage(data: RepoStatsData): string {
   }
 
   const rows = data.repos
-    .map(r => `<tr><td>${r.repo}</td><td>${r.shipped}</td><td>${r.inProgress}</td><td>${r.guard1Pending}</td></tr>`)
+    .map(r => `<tr><td>${escapeHtml(r.repo)}</td><td>${r.shipped}</td><td>${r.inProgress}</td><td>${r.guard1Pending}</td></tr>`)
     .join('\n');
 
   return `

@@ -2,6 +2,7 @@
   "name": "lodestar",
   "version": "0.1.0",
   "description": "Autonomous Spec-Driven Multi-Repo Software Factory for Vibecoders",
+  "license": "MIT",
   "type": "module",
   "main": "src/cli/index.ts",
   "scripts": {

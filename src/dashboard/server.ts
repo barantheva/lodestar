@@ -1,4 +1,5 @@
 import { renderLayout, NAV_ITEMS } from '../shared/ui/layout.ts';
+import { escapeHtml } from '../shared/utils/escape-html.ts';
 import type { DashboardDeps } from './dashboard-deps.ts';
 import { getOrgStats } from './features/stats/use-cases/get-org-stats.ts';
 import { renderStatsPage } from './features/stats/ui/stats-page.ts';
@@ -38,6 +39,8 @@ import { renderLoginPage } from './features/auth/ui/login-page.ts';
 import { validateUserSession } from './features/auth/use-cases/validate-user-session.ts';
 import { loginUser } from './features/auth/use-cases/login-user.ts';
 
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
 function notBuiltPage(screen: string): string {
   return `<div class="card"><div class="empty-state">Screen "${screen}" isn't wired to the dashboard server yet.</div></div>`;
 }
@@ -47,8 +50,14 @@ export function createDashboardServer(deps: DashboardDeps) {
 
   return Bun.serve({
     port: deps.config.port,
+    hostname: deps.hostname,
     async fetch(req) {
       const url = new URL(req.url);
+
+      // Loopback bind alone doesn't stop DNS rebinding: a rebound attacker domain still reaches 127.0.0.1.
+      if (deps.hostname === '127.0.0.1' && !LOOPBACK_HOSTS.has(url.hostname)) {
+        return new Response('Misdirected Request', { status: 421 });
+      }
 
       // Public /login endpoint
       if (url.pathname === '/login') {
@@ -146,18 +155,20 @@ export function createDashboardServer(deps: DashboardDeps) {
 
       if (url.pathname === '/release-new') {
         if (req.method === 'POST') {
-          const formData = await req.formData();
-          const tag = (formData.get('tag') as string) || '';
-          const changelogFilename = (formData.get('changelogFilename') as string) || '';
-          const changelogContent = (formData.get('changelogContent') as string) || '';
+          // Tag/filename/changelog are recomputed here, never trusted from the client — the
+          // GET preview's hidden fields could otherwise be edited into a shell-injection or
+          // path-traversal payload via devtools before submit.
+          const preview = await getCreateReleasePreview({ registry: deps.registry, baseDir: deps.baseDir });
 
-          const result = await createRelease({ registry: deps.registry, baseDir: deps.baseDir }, { tag, changelogFilename, changelogContent });
+          const result = await createRelease(
+            { registry: deps.registry, baseDir: deps.baseDir },
+            { tag: preview.tag, changelogFilename: preview.changelogFilename, changelogContent: preview.changelogDraft }
+          );
           if (!result.success) {
-            const preview = await getCreateReleasePreview({ registry: deps.registry, baseDir: deps.baseDir });
             const html = renderLayout({
               activeScreen: 'releasenew',
               title: 'Create Release',
-              bodyHtml: `<div class="card"><div class="empty-state">Release failed: ${result.error}</div></div>${renderCreateReleasePage(preview)}`,
+              bodyHtml: `<div class="card"><div class="empty-state">Release failed: ${escapeHtml(result.error || 'unknown error')}</div></div>${renderCreateReleasePage(preview)}`,
               user,
             });
             return new Response(html, { status: 500, headers: { 'content-type': 'text/html' } });

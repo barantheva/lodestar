@@ -57,6 +57,40 @@ describe('AuthService', () => {
     expect(() => authService.createUser({ username: 'analyst1', password: 'xyz' })).toThrow();
   });
 
+  it('hashes new users with argon2id and upgrades legacy seed hashes on login', () => {
+    const authDb = openAuthDb(':memory:');
+    const authService = new AuthService(authDb);
+
+    authService.createUser({ username: 'ops', password: 'pw' });
+    expect(authDb.findUserByUsername('ops')!.password_hash.startsWith('$argon2id$')).toBe(true);
+
+    expect(authDb.findUserByUsername('admin')!.password_hash.startsWith('$argon2')).toBe(false);
+    expect(authService.authenticate('admin', 'admin')).not.toBeNull();
+    expect(authDb.findUserByUsername('admin')!.password_hash.startsWith('$argon2id$')).toBe(true);
+    expect(authService.authenticate('admin', 'admin')).not.toBeNull();
+  });
+
+  it('flags default-password accounts until the admin password is overridden', () => {
+    const authService = new AuthService(openAuthDb(':memory:'));
+    expect(authService.accountsWithDefaultPasswords().sort()).toEqual(['admin', 'developer']);
+
+    authService.setPassword('admin', 'a-real-secret');
+    expect(authService.accountsWithDefaultPasswords()).toEqual(['developer']);
+    expect(authService.authenticate('admin', 'admin')).toBeNull();
+    expect(authService.authenticate('admin', 'a-real-secret')).not.toBeNull();
+    expect(() => authService.setPassword('ghost', 'x')).toThrow();
+  });
+
+  it('revokes all of a user\'s sessions when their password changes', () => {
+    const authService = new AuthService(openAuthDb(':memory:'));
+    const admin = authService.authenticate('admin', 'admin')!;
+    const dev = authService.authenticate('developer', 'developer')!;
+
+    authService.setPassword('admin', 'rotated');
+    expect(authService.validateSession(admin.sessionToken)).toBeNull();
+    expect(authService.validateSession(dev.sessionToken)?.username).toBe('developer');
+  });
+
   it('lists active sessions joined with the owning username, and revokes by token', () => {
     const authDb = openAuthDb(':memory:');
     const authService = new AuthService(authDb);

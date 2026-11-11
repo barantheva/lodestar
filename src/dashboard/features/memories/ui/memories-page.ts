@@ -1,4 +1,5 @@
 import type { MemoriesData } from '../use-cases/get-memories.ts';
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 function trackBadge(status: string): string {
   if (status === 'shipped') return `<span class="badge-pill badge-green">Guard 3 certified</span>`;
@@ -11,13 +12,13 @@ export function renderMemoriesPage(data: MemoriesData): string {
     .map(
       t => `<div class="activity-item">
         <div class="activity-header">
-          <span class="branch-tag">⌥ ${t.trackId}</span>
+          <span class="branch-tag">⌥ ${escapeHtml(t.trackId)}</span>
           ${trackBadge(t.status)}
         </div>
         <div class="activity-meta">
-          <span>Guard 1: ${t.guard1SignedBy || '—'}</span>
-          <span>Guard 2: ${t.guard2SignedBy || '—'}</span>
-          <span>Guard 3: ${t.guard3SignedBy || '—'}</span>
+          <span>Guard 1: ${t.guard1SignedBy ? escapeHtml(t.guard1SignedBy) : '—'}</span>
+          <span>Guard 2: ${t.guard2SignedBy ? escapeHtml(t.guard2SignedBy) : '—'}</span>
+          <span>Guard 3: ${t.guard3SignedBy ? escapeHtml(t.guard3SignedBy) : '—'}</span>
         </div>
       </div>`
     )

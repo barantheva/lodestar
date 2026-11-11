@@ -32,6 +32,20 @@ function createTestDeps() {
 }
 
 describe('Dashboard Server Authentication', () => {
+  it('rejects non-loopback Host headers when bound to loopback (DNS rebinding)', async () => {
+    const server = createDashboardServer({ ...createTestDeps(), hostname: '127.0.0.1' });
+    try {
+      const rebound = await server.fetch(new Request(`http://attacker.test:${server.port}/login`));
+      expect(rebound.status).toBe(421);
+      const local = await fetch(`http://127.0.0.1:${server.port}/login`);
+      expect(local.status).toBe(200);
+      const named = await server.fetch(new Request(`http://localhost:${server.port}/login`));
+      expect(named.status).toBe(200);
+    } finally {
+      server.stop(true);
+    }
+  });
+
   it('serves GET /login with login form', async () => {
     const deps = createTestDeps();
     const server = createDashboardServer(deps);
@@ -44,6 +58,19 @@ describe('Dashboard Server Authentication', () => {
     expect(html).toContain('Quick-fill admin');
     expect(html).toContain('Quick-fill developer');
     expect(html).toContain('admin');
+    server.stop();
+  });
+
+  it('reflects the error and returnUrl query params on /login as inert text, not executable markup', async () => {
+    const deps = createTestDeps();
+    const server = createDashboardServer(deps);
+
+    const payload = '<script>alert(document.cookie)</script>';
+    const res = await server.fetch(new Request(`http://localhost/login?error=${encodeURIComponent(payload)}&returnUrl=${encodeURIComponent('"><script>alert(1)</script>')}`));
+    const html = await res.text();
+
+    expect(html).not.toContain('<script>alert');
+    expect(html).toContain('&lt;script&gt;');
     server.stop();
   });
 

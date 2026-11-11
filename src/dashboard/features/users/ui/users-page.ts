@@ -1,18 +1,15 @@
 import type { UsersRegistryData } from '../use-cases/get-users-registry.ts';
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+import { escapeHtml } from '../../../../shared/utils/escape-html.ts';
 
 export function renderUsersPage(data: UsersRegistryData): string {
   const userRows = data.users
     .map(
       u => `<tr>
-        <td>${u.id}</td>
-        <td>${u.username}</td>
-        <td><span class="badge-pill ${u.role === 'admin' ? 'badge-green' : ''}">${u.role}</span></td>
-        <td>${u.name || '—'}</td>
-        <td>${u.email || '—'}</td>
+        <td>${escapeHtml(u.id)}</td>
+        <td>${escapeHtml(u.username)}</td>
+        <td><span class="badge-pill ${u.role === 'admin' ? 'badge-green' : ''}">${escapeHtml(u.role)}</span></td>
+        <td>${u.name ? escapeHtml(u.name) : '—'}</td>
+        <td>${u.email ? escapeHtml(u.email) : '—'}</td>
       </tr>`
     )
     .join('\n');
@@ -20,13 +17,13 @@ export function renderUsersPage(data: UsersRegistryData): string {
   const sessionRows = data.sessions
     .map(
       s => `<tr>
-        <td><code>${s.token.slice(0, 12)}…</code></td>
-        <td>${s.username}</td>
+        <td><code>${escapeHtml(s.token.slice(0, 12))}…</code></td>
+        <td>${escapeHtml(s.username)}</td>
         <td>${new Date(s.createdAt).toLocaleString()}</td>
         <td>${Math.max(0, Math.round((s.expiresAt - Date.now()) / 3600_000))}h remaining</td>
         <td>
           <form method="POST" action="/users/revoke-session" style="display:inline;">
-            <input type="hidden" name="token" value="${s.token}">
+            <input type="hidden" name="token" value="${escapeHtml(s.token)}">
             <button class="action-btn danger" type="submit">Revoke</button>
           </form>
         </td>
@@ -43,7 +40,7 @@ export function renderUsersPage(data: UsersRegistryData): string {
       <div class="card"><div class="card-header"><div class="card-title-group"><span class="card-icon">👥</span><span class="card-title">Total Users</span></div></div><div class="card-stat">${data.totalUsers}</div></div>
       <div class="card"><div class="card-header"><div class="card-title-group"><span class="card-icon">🛡️</span><span class="card-title">Administrators</span></div></div><div class="card-stat">${data.adminCount}</div></div>
       <div class="card"><div class="card-header"><div class="card-title-group"><span class="card-icon">🧑‍💻</span><span class="card-title">Developers</span></div></div><div class="card-stat">${data.developerCount}</div></div>
-      <div class="card"><div class="card-header"><div class="card-title-group"><span class="card-icon">🔐</span><span class="card-title">Hash Engine</span></div></div><div class="card-subtitle" style="margin:0; font-size:13px; color: var(--text-white);">SHA-256 + 16-byte salt</div></div>
+      <div class="card"><div class="card-header"><div class="card-title-group"><span class="card-icon">🔐</span><span class="card-title">Hash Engine</span></div></div><div class="card-subtitle" style="margin:0; font-size:13px; color: var(--text-white);">argon2id (legacy SHA-256 rows upgraded on login)</div></div>
     </div>
 
     <div class="card" style="margin-bottom: 16px;">
