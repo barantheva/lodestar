@@ -56,3 +56,5 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+# Project docs (kept local, not versioned)
+docs/
