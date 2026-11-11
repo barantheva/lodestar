@@ -48,6 +48,7 @@ export function createDashboardServer(deps: DashboardDeps) {
 
   return Bun.serve({
     port: deps.config.port,
+    hostname: deps.hostname,
     async fetch(req) {
       const url = new URL(req.url);
 

@@ -13,4 +13,5 @@ export interface DashboardDeps {
   authService?: AuthService;
   config: Config;
   baseDir?: string;
+  hostname?: string;
 }

@@ -43,6 +43,7 @@ export interface Config {
   clarityLookbackHours: number;
   clarityBatchIntervalHours: number;
   dashboardAdminPassword?: string;
+  dashboardDeveloperPassword?: string;
 }
 
 function numEnv(raw: string | undefined, fallback: number): number {
@@ -213,5 +214,6 @@ export function loadConfig(envOverride?: Record<string, string | undefined>): Co
     clarityLookbackHours: numEnv(env.CLARITY_LOOKBACK_HOURS, 24),
     clarityBatchIntervalHours: numEnv(env.CLARITY_BATCH_INTERVAL_HOURS || env.CLARITY_POLL_INTERVAL_HOURS, 4),
     dashboardAdminPassword: env.DASHBOARD_ADMIN_PASSWORD || undefined,
+    dashboardDeveloperPassword: env.DASHBOARD_DEVELOPER_PASSWORD || undefined,
   };
 }

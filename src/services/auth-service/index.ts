@@ -108,6 +108,7 @@ export class AuthService {
     if (!user) throw new Error(`No user '${username}'`);
     const { hash, salt } = hashPassword(password);
     this.authDb.updatePassword(user.id, hash, salt);
+    this.authDb.deleteSessionsForUser(user.id);
   }
 
   // The seed SQL ships admin/admin and developer/developer; flag any account still matching that pattern.

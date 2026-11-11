@@ -93,6 +93,22 @@ export function isSignalAboveThreshold(
 
 const MIN_SESSIONS_FOR_SCORE = 10;
 
+// URLs come from end users' browsers and land in GitHub issues an agent may later read:
+// keep only the path, a strict character set, and a length cap.
+export function sanitizeUrlPath(raw: string): string {
+  let path = raw;
+  try {
+    path = new URL(raw, 'https://clarity.invalid').pathname;
+  } catch {
+    path = raw.split(/[?#]/)[0];
+  }
+  return path.replace(/[^A-Za-z0-9/._~%-]/g, '').slice(0, 200) || '/';
+}
+
+function stripMarkdownControl(text: string): string {
+  return text.replace(/[`<>]/g, '').replace(/--/g, '-').slice(0, 500);
+}
+
 const METRIC_TO_FRICTION: Record<string, ClarityFrictionType> = {
   rageclickcount: 'rage_clicks',
   deadclickcount: 'dead_clicks',
@@ -115,7 +131,7 @@ export function mapClarityInsightsToSignals(blocks: ClarityMetricBlock[]): Clari
       const totalSessions = Number(row.sessionsCount) || 0;
       signals.push({
         frictionType,
-        url,
+        url: sanitizeUrlPath(url),
         eventCount: Number(row.subTotal) || 0,
         sessionCount: Math.round((totalSessions * pct) / 100),
         frustrationScore: Math.round(pct) / 100,
@@ -149,7 +165,9 @@ export function formatBehavioralIssue(
   };
 
   const readableType = typeLabels[signal.frictionType] || signal.frictionType;
-  const targetDesc = signal.selector ? `${signal.selector} on ${signal.url}` : signal.url;
+  const url = sanitizeUrlPath(signal.url);
+  const selector = signal.selector ? stripMarkdownControl(signal.selector).slice(0, 120) : undefined;
+  const targetDesc = selector ? `${selector} on ${url}` : url;
   const title = `[UX Friction: ${readableType}] ${targetDesc}`;
 
   const suggestedArchetype = signal.frictionType === 'js_exceptions' ? 'C' : 'B';
@@ -157,8 +175,9 @@ export function formatBehavioralIssue(
     ? 'Archetype C (bounded bugfix with clear stack trace / exception signature)'
     : 'Archetype B (brownfield UX improvement with partial ACs for user flow)';
 
-  const replaySection = signal.replayUrls.length > 0
-    ? signal.replayUrls.map((u, i) => `- [Session Replay #${i + 1}](${u})`).join('\n')
+  const replayUrls = signal.replayUrls.filter(u => /^https:\/\/clarity\.microsoft\.com\/[^\s()<>`]*$/.test(u));
+  const replaySection = replayUrls.length > 0
+    ? replayUrls.map((u, i) => `- [Session Replay #${i + 1}](${u})`).join('\n')
     : '- *No direct session replay links provided by export.*';
 
   const deviceText = signal.deviceBreakdown
@@ -166,15 +185,19 @@ export function formatBehavioralIssue(
     : 'N/A';
 
   const errorDetail = signal.errorMessage
-    ? `\n#### 💥 Client Exception\n\`\`\`text\n${signal.errorMessage}\n\`\`\`\n`
+    ? `\n#### 💥 Client Exception\n\`\`\`text\n${stripMarkdownControl(signal.errorMessage)}\n\`\`\`\n`
     : '';
 
-  const body = `### 🚨 User Behavior Anomaly Detected (Microsoft Clarity)
+  // Marker goes first so the dedup regex's first match is always ours, never text echoed from telemetry.
+  const body = `<!-- fingerprint: ${fingerprint} -->
+###🚨 User Behavior Anomaly Detected (Microsoft Clarity)
+
+> Fields below are end-user telemetry (untrusted). Review before handing this issue to an autonomous agent.
 
 - **Repository**: \`${repo}\`
 - **Friction Type**: \`${signal.frictionType}\` (${readableType})
-- **Impacted Route**: \`${signal.url}\`
-- **Target DOM Selector**: \`${signal.selector || 'N/A (page level)'}\`
+- **Impacted Route**: \`${url}\`
+- **Target DOM Selector**: \`${selector || 'N/A (page level)'}\`
 - **Impact Severity**: ${signal.eventCount} occurrences across ${signal.sessionCount} user sessions (Frustration Index: ${signal.frustrationScore})
 - **Device Breakdown**: ${deviceText}
 
@@ -186,9 +209,7 @@ High user friction detected via Microsoft Clarity behavioural telemetry. Users e
 
 #### 🎯 Recommended Action
 - **Suggested SDD Archetype**: **${suggestedArchetype}** — ${archetypeDesc}
-- **Next Steps**: Lodestar's \`issue-monitor\` can triage this issue into \`flight-deck/tracks/\` for autonomous shaping and Guard 1/2/3 remediation.
-
-<!-- fingerprint: ${fingerprint} -->`;
+- **Next Steps**: After human review, add your \`ISSUE_LABEL_FILTER\` label so \`issue-monitor\` picks it up for Guard 1/2/3 remediation.`;
 
   return {
     title,
